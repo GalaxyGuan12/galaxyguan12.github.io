@@ -31,7 +31,7 @@
 <meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/image-1.png">
 <meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/image.png">
 <meta property="article:published_time" content="2024-06-27T02:24:09.000Z">
-<meta property="article:modified_time" content="2025-06-27T02:59:32.892Z">
+<meta property="article:modified_time" content="2025-06-27T03:07:31.787Z">
 <meta property="article:author" content="GalaxyGuan">
 <meta property="article:tag" content="反向传播">
 <meta name="twitter:card" content="summary">
@@ -398,8 +398,8 @@
 <p>但是在介绍自动微分之前，我们先来了解两种替代方法，即数值微分和符号微分，以及它们为何无法满足基于梯度的神经网络的优化需求，以打消某些同学心中的疑惑。</p>
 <h1 id="数值微分-Numeric-Differentiation"><a href="#数值微分-Numeric-Differentiation" class="headerlink" title="数值微分(Numeric Differentiation)"></a>数值微分(Numeric Differentiation)</h1><p>在了解数值微分之前，我们需要大概了解下 泰勒展开， 因为它能帮助我们理解差分公式。</p>
 <h2 id="泰勒展开"><a href="#泰勒展开" class="headerlink" title="泰勒展开"></a>泰勒展开</h2><p>泰勒展开是用多项式函数逼近光滑函数的一种数学工具，它将一个函数在某一点附近展开为无限项的多项式级数。泰勒展开的核心思想是：如果一个函数足够光滑（即无限可导），那么它在某一点附近的值可以用该点的函数值及其各阶导数的线性组合来近似表示。</p>
-<h3 id="泰勒展开公式"><a href="#泰勒展开公式" class="headerlink" title="泰勒展开公式"></a>泰勒展开公式</h3><p>设 $f(x)$ 是一个在 $x &#x3D; a$ 处无限可导的函数，则它在 $x &#x3D; a$ 处的泰勒级数为：</p>
-<p>$f(x) &#x3D; f(a) + f’(a)(x-a) + \frac{f’’(a)}{2!}(x-a)^2 + \frac{f’’’(a)}{3!}(x-a)^3 + \cdots$</p>
+<h3 id="泰勒展开公式"><a href="#泰勒展开公式" class="headerlink" title="泰勒展开公式"></a>泰勒展开公式</h3><p>设 $f(x)$ 是一个在 $x &#x3D; a$ 处无限可导的函数，则它在$x &#x3D; a$处的泰勒级数为：</p>
+<p>$f(x) &#x3D; f(a) + f’(a)(x-a) + \frac{f’’(a)}{2!}(x-a)^2 + \cdots$</p>
 <p>或者写成求和形式：$f(x) &#x3D; \sum_{n&#x3D;0}^{\infty} \frac{f^{(n)}(a)}{n!} (x-a)^n$<br>其中：</p>
 <ul>
 <li><p>$f^{(n)}(a)$ 是 $f(x)$ 在 $x &#x3D; a$ 处的 第 $n$ 阶导数，</p>
