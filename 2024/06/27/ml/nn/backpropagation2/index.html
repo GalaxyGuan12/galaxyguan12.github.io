@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="背景通过上一篇文章的学习，相信大家对偏导数、梯度、多元函数、损失函数和反向传播等基本概念有了基础的认识。接下来，我们就来具体聊聊关于反向传播的另一个更专业更通用的术语，即自动微分。在开始之前，你是否还记得微分、导数、偏导数、梯度这些名词？我们先来复习一遍。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入浅出反向传播（2）">
+<meta property="og:url" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="背景通过上一篇文章的学习，相信大家对偏导数、梯度、多元函数、损失函数和反向传播等基本概念有了基础的认识。接下来，我们就来具体聊聊关于反向传播的另一个更专业更通用的术语，即自动微分。在开始之前，你是否还记得微分、导数、偏导数、梯度这些名词？我们先来复习一遍。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/screenshot-20250627-105450.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/image-1.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/image.png">
+<meta property="article:published_time" content="2024-06-27T02:24:09.000Z">
+<meta property="article:modified_time" content="2025-06-27T02:59:32.892Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="反向传播">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/screenshot-20250627-105450.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/","path":"2024/06/27/ml/nn/backpropagation2/","title":"深入浅出反向传播（2）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>深入浅出反向传播（2） | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="nav-number">2.</span> <span class="nav-text">基础概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E6%95%B0%EF%BC%88Derivative%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">导数（Derivative）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">2.1.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9"><span class="nav-number">2.1.2.</span> <span class="nav-text">关键点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.1.3.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E5%88%86%EF%BC%88Differential%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">微分（Differential）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9-1"><span class="nav-number">2.2.2.</span> <span class="nav-text">关键点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="nav-number">2.2.3.</span> <span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A2%AF%E5%BA%A6%EF%BC%88Gradient%EF%BC%89"><span class="nav-number">2.3.</span> <span class="nav-text">梯度（Gradient）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-2"><span class="nav-number">2.3.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9-2"><span class="nav-number">2.3.2.</span> <span class="nav-text">关键点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="nav-number">2.3.3.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E8%80%85%E7%9A%84%E8%81%94%E7%B3%BB%E4%B8%8E%E5%8C%BA%E5%88%AB"><span class="nav-number">2.4.</span> <span class="nav-text">三者的联系与区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8"><span class="nav-number">2.5.</span> <span class="nav-text">实际应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.6.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D"><span class="nav-number">3.</span> <span class="nav-text">梯度下降</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E5%80%BC%E5%BE%AE%E5%88%86-Numeric-Differentiation"><span class="nav-number">4.</span> <span class="nav-text">数值微分(Numeric Differentiation)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80"><span class="nav-number">4.1.</span> <span class="nav-text">泰勒展开</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80%E5%85%AC%E5%BC%8F"><span class="nav-number">4.1.1.</span> <span class="nav-text">泰勒展开公式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80%E7%9A%84%E7%9B%B4%E8%A7%82%E7%90%86%E8%A7%A3"><span class="nav-number">4.1.2.</span> <span class="nav-text">泰勒展开的直观理解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80%E7%9A%84%E4%BD%99%E9%A1%B9%EF%BC%88%E6%88%AA%E6%96%AD%E8%AF%AF%E5%B7%AE%EF%BC%89"><span class="nav-number">4.1.3.</span> <span class="nav-text">泰勒展开的余项（截断误差）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80%E7%9A%84%E6%94%B6%E6%95%9B%E6%80%A7"><span class="nav-number">4.1.4.</span> <span class="nav-text">泰勒展开的收敛性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E5%87%BD%E6%95%B0%E7%9A%84%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80"><span class="nav-number">4.1.5.</span> <span class="nav-text">常见函数的泰勒展开</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%AA%E6%96%AD%E8%AF%AF%E5%B7%AE%EF%BC%88%E6%B3%B0%E5%8B%92%E5%B1%95%E5%BC%80%E5%9C%A8%E5%B7%AE%E5%88%86%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8%EF%BC%89"><span class="nav-number">4.2.</span> <span class="nav-text">截断误差（泰勒展开在差分中的应用）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%AA%E6%96%AD%E8%AF%AF%E5%B7%AE%E7%9A%84%E6%9D%A5%E6%BA%90"><span class="nav-number">4.2.1.</span> <span class="nav-text">截断误差的来源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9-3"><span class="nav-number">4.2.2.</span> <span class="nav-text">关键点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%81%E9%99%90%E6%B1%82%E6%A2%AF%E5%BA%A6%EF%BC%9F"><span class="nav-number">4.3.</span> <span class="nav-text">极限求梯度？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%AE%E5%88%86%E6%B3%95%E6%B1%82%E6%A2%AF%E5%BA%A6"><span class="nav-number">4.4.</span> <span class="nav-text">差分法求梯度</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用碎片化时间学习系统化知识，用递归深入问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用碎片化时间学习系统化知识，用递归深入问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="深入浅出反向传播（2） | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入浅出反向传播（2）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2024-06-27 10:24:09" itemprop="dateCreated datePublished" datetime="2024-06-27T10:24:09+08:00">2024-06-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">机器学习</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">神经网络</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>通过上一篇文章的学习，相信大家对偏导数、梯度、多元函数、损失函数和反向传播等基本概念有了基础的认识。接下来，我们就来具体聊聊关于反向传播的另一个更专业更通用的术语，即自动微分。在开始之前，你是否还记得微分、导数、偏导数、梯度这些名词？我们先来复习一遍。</p>
+<span id="more"></span>
+
+<h1 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h1><p>梯度、微分和导数是微积分中的核心概念，它们在数学、物理和机器学习中广泛应用。虽然三者密切相关，但侧重点和应用场景不同。以下从定义、几何意义和应用角度进行对比解析：</p>
+<h2 id="导数（Derivative）"><a href="#导数（Derivative）" class="headerlink" title="导数（Derivative）"></a>导数（Derivative）</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><ul>
+<li><p>单变量函数：导数描述函数在某一点处的瞬时变化率。数学形式: $f’(x) &#x3D; \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}$</p>
+</li>
+<li><p>物理意义：速度、加速度、斜率等。</p>
+</li>
+<li><p>几何意义：曲线在某点处切线的斜率。</p>
+</li>
+</ul>
+<h3 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h3><ul>
+<li><p>导数是标量，仅适用于单变量函数。</p>
+</li>
+<li><p>导数存在条件：函数在该点连续且左导数等于右导数。</p>
+</li>
+</ul>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>若$ f(x) &#x3D; x^2$，则导数为 $f’(x) &#x3D; 2x$。在 $x&#x3D;3$处，导数为 $6$，表示此时函数值以速率 6 增长。</p>
+<h2 id="微分（Differential）"><a href="#微分（Differential）" class="headerlink" title="微分（Differential）"></a>微分（Differential）</h2><h3 id="定义-1"><a href="#定义-1" class="headerlink" title="定义"></a>定义</h3><ul>
+<li>线性近似：微分是函数在某点处的局部线性近似，即用切线代替曲线。数学形式：$df &#x3D; f’(x) \cdot dx$</li>
+</ul>
+<p>其中 $dx$ 是自变量的微小变化，$df$ 是因变量的近似变化量。</p>
+<ul>
+<li>微分形式：微分是导数的代数表达，例如 $dy &#x3D; 2x , dx$。</li>
+</ul>
+<h3 id="关键点-1"><a href="#关键点-1" class="headerlink" title="关键点"></a>关键点</h3><ul>
+<li><p>微分是一个线性映射（函数增量的最佳线性近似）。</p>
+</li>
+<li><p>在多元函数中，微分发展为全微分（Total Differential），例如: $df &#x3D; \frac{\partial f}{\partial x}dx + \frac{\partial f}{\partial y}dy$</p>
+</li>
+</ul>
+<h3 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h3><p>若 $f(x) &#x3D; x^2$，当 $x&#x3D;3$ 且 $dx&#x3D;0.1$ 时，微分近似为：$df &#x3D; 6 \cdot 0.1 &#x3D; 0.6$</p>
+<p>实际增量$f(3.1)-f(3)&#x3D;0.61$，误差仅为 0.01。</p>
+<h2 id="梯度（Gradient）"><a href="#梯度（Gradient）" class="headerlink" title="梯度（Gradient）"></a>梯度（Gradient）</h2><h3 id="定义-2"><a href="#定义-2" class="headerlink" title="定义"></a>定义</h3><ul>
+<li><p>多变量函数的导数：梯度是导数的高维推广，指向函数增长最快的方向。数学形式:<br>对于 $f(x_1, x_2, …, x_n)$： $\nabla f &#x3D; \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, …, \frac{\partial f}{\partial x_n} \right)$</p>
+</li>
+<li><p>几何意义：梯度是一个向量，其方向是函数在一点处的最速上升方向，模长是变化率的最大值。</p>
+</li>
+</ul>
+<h3 id="关键点-2"><a href="#关键点-2" class="headerlink" title="关键点"></a>关键点</h3><ul>
+<li><p>梯度是向量场，适用于多变量函数。</p>
+</li>
+<li><p>负梯度方向是函数下降最快的方向，这是优化算法（如梯度下降法）的基础。</p>
+</li>
+</ul>
+<h3 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h3><p>若 $f(x, y) &#x3D; x^2 + y^2$，则梯度为：$\nabla f &#x3D; (2x, 2y)$</p>
+<p>在点 $(1, 2)$ 处，梯度为 $(2, 4)$，表示从该点出发，沿方向 $(2,4)$ 函数值增长最快。</p>
+<h2 id="三者的联系与区别"><a href="#三者的联系与区别" class="headerlink" title="三者的联系与区别"></a>三者的联系与区别</h2><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>适用场景</th>
+<th>数学形式</th>
+<th>物理意义</th>
+<th>几何意义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>导数</td>
+<td>单变量函数</td>
+<td>标量</td>
+<td>瞬时变化率（如速度）</td>
+<td>曲线切线斜率</td>
+</tr>
+<tr>
+<td>微分</td>
+<td>单变量&#x2F;多变量函数</td>
+<td>线性映射</td>
+<td>局部线性近似</td>
+<td>切平面的高度变化</td>
+</tr>
+<tr>
+<td>梯度</td>
+<td>多变量函数</td>
+<td>向量</td>
+<td>最速上升方向及变化率</td>
+<td>向量场指向最陡方向</td>
+</tr>
+</tbody></table>
+<h2 id="实际应用"><a href="#实际应用" class="headerlink" title="实际应用"></a>实际应用</h2><ol>
+<li><p>导数 </p>
+<ul>
+<li><p>计算曲线的极值点（最大值&#x2F;最小值）。</p>
+</li>
+<li><p>牛顿法求方程的根。</p>
+</li>
+</ul>
+</li>
+<li><p>微分 </p>
+<ul>
+<li><p>误差分析（如泰勒展开的一阶近似）。</p>
+</li>
+<li><p>微分方程建模（如 $dy &#x3D; k y , dx$）。</p>
+</li>
+</ul>
+</li>
+</ol>
+<ol start="3">
+<li><p>梯度 </p>
+<ul>
+<li><p>机器学习：梯度下降法优化损失函数。</p>
+</li>
+<li><p>物理场分析：电场、温度场的梯度描述场的变化。</p>
+</li>
+<li><p>计算机图形学：法线方向计算（曲面的梯度方向）。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li><p>导数是单变量函数的瞬时变化率，微分是局部线性近似，梯度是多变量函数的最速上升方向。</p>
+</li>
+<li><p>梯度是导数的向量推广，微分是导数的代数表达，三者共同构成微积分分析函数变化的核心工具。在机器学习和优化问题中，梯度尤其关键，直接指导模型参数的更新方向。</p>
+</li>
+</ul>
+<h1 id="梯度下降"><a href="#梯度下降" class="headerlink" title="梯度下降"></a>梯度下降</h1><p>我们再回顾一下梯度下降的过程：</p>
+<ol>
+<li><p>使用目标 [损失] 函数，计算模型在一组输入上的预测与这些输入的真实值之间的损失（误差）。</p>
+</li>
+<li><p>通过计算损失相对于模型每个参数的偏导数（梯度），找出参数对损失的影响。</p>
+</li>
+<li><p>通过将每个参数减去其相应的梯度并乘以一个称为学习率的超参数，朝着最小化损失的方向移动模型的参数。</p>
+</li>
+<li><p>清除所有梯度，并重复该过程，直到模型收敛,换句话说，直到模型不再改进并达到最佳性能；或者达到最大步长。</p>
+</li>
+</ol>
+<p>这个过程能够构建出强大的深度神经网络，但其中有一步很关键且复杂，那就是找到梯度以更新模型的参数。从数学的角度来看，我们如何对模型的参数求损失的导数？由此，我们引出自动微分（automatic differentiation）。</p>
+<p>但是在介绍自动微分之前，我们先来了解两种替代方法，即数值微分和符号微分，以及它们为何无法满足基于梯度的神经网络的优化需求，以打消某些同学心中的疑惑。</p>
+<h1 id="数值微分-Numeric-Differentiation"><a href="#数值微分-Numeric-Differentiation" class="headerlink" title="数值微分(Numeric Differentiation)"></a>数值微分(Numeric Differentiation)</h1><p>在了解数值微分之前，我们需要大概了解下 泰勒展开， 因为它能帮助我们理解差分公式。</p>
+<h2 id="泰勒展开"><a href="#泰勒展开" class="headerlink" title="泰勒展开"></a>泰勒展开</h2><p>泰勒展开是用多项式函数逼近光滑函数的一种数学工具，它将一个函数在某一点附近展开为无限项的多项式级数。泰勒展开的核心思想是：如果一个函数足够光滑（即无限可导），那么它在某一点附近的值可以用该点的函数值及其各阶导数的线性组合来近似表示。</p>
+<h3 id="泰勒展开公式"><a href="#泰勒展开公式" class="headerlink" title="泰勒展开公式"></a>泰勒展开公式</h3><p>设 $f(x)$ 是一个在 $x &#x3D; a$ 处无限可导的函数，则它在 $x &#x3D; a$ 处的泰勒级数为：</p>
+<p>$f(x) &#x3D; f(a) + f’(a)(x-a) + \frac{f’’(a)}{2!}(x-a)^2 + \frac{f’’’(a)}{3!}(x-a)^3 + \cdots$</p>
+<p>或者写成求和形式：$f(x) &#x3D; \sum_{n&#x3D;0}^{\infty} \frac{f^{(n)}(a)}{n!} (x-a)^n$<br>其中：</p>
+<ul>
+<li><p>$f^{(n)}(a)$ 是 $f(x)$ 在 $x &#x3D; a$ 处的 第 $n$ 阶导数，</p>
+</li>
+<li><p>$n!$ 是 $n$ 的阶乘，</p>
+</li>
+<li><p>$(x-a)^n$ 是 $(x-a)$ 的 $n$ 次幂。</p>
+</li>
+</ul>
+<blockquote>
+<p>有同学可能会疑惑，$x&#x3D;a$ &#x3D;&gt; $x-a&#x3D;0$ &#x3D;&gt; $f(x)&#x3D;f(a)$, 啥情况？<br>是这样没错！ 但泰勒级数的真正价值在于$x≠a$时，用多项式近似 $f(x)$, $(x−a)$ 越小，逼近越精确。<br>这样 在 $a$ 附近就可以用低阶多项式近似复杂函数</p>
+</blockquote>
+<p>特殊情况：麦克劳林展开（Maclaurin Series）</p>
+<p>当 $a &#x3D; 0$ 时，泰勒展开变为麦克劳林展开：</p>
+<p>$f(x) &#x3D; f(0) + f’(0)x + \frac{f’’(0)}{2!}x^2 + \frac{f’’’(0)}{3!}x^3 + \cdots$</p>
+<h3 id="泰勒展开的直观理解"><a href="#泰勒展开的直观理解" class="headerlink" title="泰勒展开的直观理解"></a>泰勒展开的直观理解</h3><p>泰勒展开的核心思想是：</p>
+<ol>
+<li><p>用多项式逼近函数：多项式计算简单，容易求导、积分，适合数值计算。</p>
+</li>
+<li><p>用导数信息构造近似：</p>
+<ul>
+<li><p>0 阶近似（常数）：$f(x) \approx f(a)$（水平直线）</p>
+</li>
+<li><p>1 阶近似（线性）：$f(x) \approx f(a) + f’(a)(x-a)$（切线）</p>
+</li>
+<li><p>2 阶近似（抛物线）：$f(x) \approx f(a) + f’(a)(x-a) + \frac{f’’(a)}{2}(x-a)^2$</p>
+</li>
+<li><p>高阶近似：增加更多项以提高精度。</p>
+</li>
+</ul>
+</li>
+</ol>
+<p>示例：用泰勒展开近似$e^x$在$x&#x3D;0$附近</p>
+<p>$e^x \approx 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \frac{x^4}{4!} + \cdots$</p>
+<ul>
+<li><p>0 阶近似：$e^x \approx 1$（误差较大）</p>
+</li>
+<li><p>1 阶近似：$e^x \approx 1 + x$（直线）</p>
+</li>
+<li><p>2 阶近似：$e^x \approx 1 + x + \frac{x^2}{2}$（抛物线）</p>
+</li>
+<li><p>更高阶：逼近更精确。</p>
+</li>
+</ul>
+<h3 id="泰勒展开的余项（截断误差）"><a href="#泰勒展开的余项（截断误差）" class="headerlink" title="泰勒展开的余项（截断误差）"></a>泰勒展开的余项（截断误差）</h3><p>泰勒展开通常是无限级数，但在实际计算中我们只能取有限项（如 $n$ 阶近似），因此会引入截断误差（Truncation Error），即余项 $R_n(x)$：</p>
+<p>$f(x) &#x3D; \underbrace{\sum_{k&#x3D;0}^{n} \frac{f^{(k)}(a)}{k!}(x-a)^k}<em>{\text{泰勒多项式}} + \underbrace{R_n(x)}</em>{\text{余项}}$</p>
+<p>余项 $R_n(x)$ 表示被忽略的高阶项的影响，常见形式有：</p>
+<ol>
+<li>拉格朗日余项（Lagrange Remainder）：$R_n(x) &#x3D; \frac{f^{(n+1)}(\xi)}{(n+1)!}(x-a)^{n+1}, \quad \xi \in (a, x)$</li>
+</ol>
+<ul>
+<li><p>其中 $\xi$ 是 $a$ 和 $x$ 之间的某个点。</p>
+</li>
+<li><p>用于估计截断误差的上界。</p>
+</li>
+</ul>
+<ol start="2">
+<li>佩亚诺余项（Peano Remainder）： $R_n(x) &#x3D; o((x-a)^n)$</li>
+</ol>
+<ul>
+<li>表示余项比 $(x-a)^n$ 更快趋近于 0（当 $x \to a$ 时）。</li>
+</ul>
+<h3 id="泰勒展开的收敛性"><a href="#泰勒展开的收敛性" class="headerlink" title="泰勒展开的收敛性"></a>泰勒展开的收敛性</h3><p>泰勒级数并不总是收敛到原函数，收敛性取决于：</p>
+<ul>
+<li><p>函数的解析性：函数是否无限可导。</p>
+</li>
+<li><p>收敛半径：</p>
+<ul>
+<li><p>对于某些函数（如 $\frac{1}{1-x}$），泰勒级数只在 $|x| &lt; 1$ 时收敛。</p>
+</li>
+<li><p>对于 $e^x, \sin x, \cos x$，泰勒级数对所有实数 $x$ 收敛。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="常见函数的泰勒展开"><a href="#常见函数的泰勒展开" class="headerlink" title="常见函数的泰勒展开"></a>常见函数的泰勒展开</h3><p><img src="/2024/06/27/ml/nn/backpropagation2/screenshot-20250627-105450.png"></p>
+<h2 id="截断误差（泰勒展开在差分中的应用）"><a href="#截断误差（泰勒展开在差分中的应用）" class="headerlink" title="截断误差（泰勒展开在差分中的应用）"></a>截断误差（泰勒展开在差分中的应用）</h2><p>在数值微分中，截断误差（Truncation Error）是指由于使用有限差分近似代替导数时，忽略泰勒级数展开中的高阶项而引入的误差。这种误差是数值方法本身固有的，与舍入误差（计算机浮点数精度限制）不同。</p>
+<h3 id="截断误差的来源"><a href="#截断误差的来源" class="headerlink" title="截断误差的来源"></a>截断误差的来源</h3><p>我们可以利用泰勒展开来近似计算导数(也就是我们接下来要提到的数值微分方法)，例如，用以下差分公式近似一阶导数：</p>
+<ol>
+<li><p>前向差分： $f’(x)\approx\frac{f(x+h)-f(x)}{h}$</p>
+</li>
+<li><p>后向差分： $f’(x)\approx\frac{f(x)-f(x-h)}{h}$</p>
+</li>
+<li><p>中心差分： $f’(x)\approx\frac{f(x+h)-f(x-h)}{2h}$</p>
+</li>
+</ol>
+<p>这些公式的推导都可以基于泰勒级数展开。例如，对 $f(x+h)$ 和 $f(x-h)$ 展开：</p>
+<p>$f(x+h) &#x3D; f(x) + h f’(x) + \frac{h^2}{2} f’’(x) + \frac{h^3}{6} f’’’(x) + \cdots$</p>
+<p>$f(x-h)&#x3D;f(x)-hf’(x)+\frac{h^2}{2}f’’(x)-\frac{h^3}{6}f’’’(x)+\cdots$</p>
+<p>将泰勒展开代入差分公式后，截断误差就出现了，也就是被忽略的高阶项。</p>
+<p>我们来代入看看：</p>
+<ol>
+<li><p>前向&#x2F;后向差分：</p>
+<ul>
+<li><p>通过泰勒展开可得： $\frac{f(x+h)-f(x)}{h}&#x3D;f’(x)+\frac{h}{2}f’’(x)+\cdots$</p>
+</li>
+<li><p>截断误差的主项为 $\frac{h}{2} f’’(x)$，是 $O(h)$（一阶精度, 线性收敛）。</p>
+</li>
+</ul>
+</li>
+<li><p>中心差分：</p>
+<ul>
+<li><p>利用泰勒展开相减消去偶数阶项：$\frac{f(x+h)-f(x-h)}{2h}&#x3D;f’(x)+\frac{h^2}{6} f’’’(x)+\cdots$</p>
+</li>
+<li><p>截断误差的主项为 $\frac{h^2}{6} f’’’(x)$，是 $O(h^2)$（二阶精度， 更加精确）。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="关键点-3"><a href="#关键点-3" class="headerlink" title="关键点"></a>关键点</h3><ol>
+<li><p>步长$h$的影响：</p>
+<ul>
+<li><p>截断误差随 $h$ 减小而减小，但过小的 $h$ 会放大舍入误差（如浮点精度限制）。</p>
+</li>
+<li><p>存在一个最优 $h$ 平衡截断误差和舍入误差。</p>
+</li>
+</ul>
+</li>
+<li><p>高阶差分公式：</p>
+<ul>
+<li>通过组合更多点的差分（如五点差分），可以进一步降低截断误差（例如 $O(h^4)$）。</li>
+</ul>
+</li>
+</ol>
+<ol start="3">
+<li><p>函数光滑性：</p>
+<ul>
+<li>若函数的高阶导数不存在或不连续（如非光滑函数），截断误差的分析会失效。</li>
+</ul>
+</li>
+</ol>
+<h2 id="极限求梯度？"><a href="#极限求梯度？" class="headerlink" title="极限求梯度？"></a>极限求梯度？</h2><p>接下来，进入正题，用数值微分来计算梯度。别着急，在这之前，我们先回顾下怎么通过使用极限定义来求导。</p>
+<p>$\frac{df}{dx}&#x3D;\lim_{ h\to 0}\frac{f(x + h)-f(x)}{h}$</p>
+<p>我们要计算函数$f: \R \to \R$ 在输入 $x$ 处的导数，需要找到在 $x$ 处的切线斜率。切线斜率可以分解为函数在 $x$ 处的结果$f$随$x$变化的比率。为了计算$f(x)$的变化量，我们基于两个输入来计算，一个是原始输入，另一个是输入加上一个小常数 $h$ ，从以上公式的分子中可以看出。接下来，我们将$f$的变化量除以$x$的变化量，也就是$h$。当 $h$ 趋近于零时，我们能得到$f(x)$ 在 $x$ 处导数的近似值。</p>
+<p>到这里，有人可能会觉得，那我直接给h赋值一个很小的数字，就能得到$f(x)$ 在 $x$ 处导数了吧？</p>
+<p>No！Why？直接取极小的扰动值 $h$ 看似符合导数的极限定义，但在实际计算中会面临两大问题:</p>
+<ul>
+<li><p>舍入误差: 因为计算机精度有限，点数有最小步长限制（如单精度浮点数精度约为 $10^{-7}$，双精度约为 $10^{-16}$）。</p>
+</li>
+<li><p>这种近似极限的方式其实缺乏误差阶数的理论指导, 没办法对误差进行量化。</p>
+</li>
+</ul>
+<p>这时，基于泰勒展开的差分法就应运而生了。</p>
+<h2 id="差分法求梯度"><a href="#差分法求梯度" class="headerlink" title="差分法求梯度"></a>差分法求梯度</h2><p>在实践中，神经网络对多维数组（通常称为张量）进行算术运算，而程序化地取极限是没有意义的（上面已经提到），因此我们舍弃极限并重写表达式以作用于网络的参数。</p>
+<p>$\frac{\partial f}{\partial \theta_i}\approx\frac{f(\theta+h⋅e_i)−f(\theta)}{h}+O(h)$</p>
+<p>这个公式就是计算多元函数偏导数的前向差分法。</p>
+<p>$f:R^n→R$ 是关于单个参数 $\theta_i$ 的偏导数，来自参数向量 $\theta$ 。符号 $e_i$代表一个单位向量，其中第i个元素为1，而所有其他元素为零。计算 $\theta_i$ 参数的偏导数就简单了，只需用 $h\approx0$ 代入计算上述公式。在神经网络中， $f$是损失函数，而 $\theta$是模型的参数。通过在模型的所有参数上计算上述公式，我们就能得到一次梯度下降所需要的梯度。</p>
+<p>上面提到过前向差分法的截断误差$O(h)$较大，我们直接优化成中心差分法，如下：</p>
+<p>$\frac{\partial f}{\partial \theta_i}\approx\frac{f(\theta+h⋅e_i)−f(\theta-h⋅e_i)}{2h}+O(h^2)$</p>
+<p>中心差分是前向差分和后向差分的组合。通过从前向差分中减去后向差分并进行简化， $O(h)$ 中的一阶误差项将相互抵消，留下二阶误差项作为主导。误差现在就与 $h$ 的平方成正比，这意味着如果 $h$ 减少一个数量级，误差将减少两个数量级。</p>
+<p><img src="/2024/06/27/ml/nn/backpropagation2/image-1.png"></p>
+<blockquote>
+<p><em>图中展示了在</em>$x&#x3D;2$<em>处对</em>$cos(x)$<em>的导数，使用</em>$h&#x3D;0.5$<em>进行差分方法（所有计算使用 32 位浮点数）。可以看到采用中心差分比前向和后向差分有更好的近似效果。另外，我们也能看到实际导数</em>$−sin⁡(2)$<em>与因截断误差导致的近似导数之间的差异。</em></p>
+</blockquote>
+<p>有人可能会说，那我们可以不断减少 $h$，因为当 $h\approx0$ 时，截断误差就不存在了。理论上来说，这确实能够消除我们在中心差分中的误差。但这样做会产生另一个副作用，上面其实也提到过好几次，就是会产生舍入误差。<br>舍入误差是由于计算机中数字表示的不准确性而引入的误差。比如 IEEE 754 标准在程序中使用单精度浮点数（float32）表示实数。神经网络在实际训练时依赖于这些表示方式。浮点数分配了固定的空间（在大多数情况下为 32 位），这限制了对任意大或小值的某些精度。联系上面的差分方法，如果$h$变得太小，可能直接下溢为零，也就是丧失了数值的信息。<br>这样来看，当我们试图减小 $h$ 以减小截断误差时，我们反而增加了舍入误差。事实上，舍入误差与 $h$ 的取值大小成反比。例如，如果我们将 $h$ 减半，就会使舍入误差加倍。所以为了计算得到更加准确的梯度，这种截断误差和舍入误差之间的平衡就是我们需要考虑的一种权衡因素。</p>
+<p><img src="/2024/06/27/ml/nn/backpropagation2/image.png"></p>
+<blockquote>
+<p><em>截断误差(Truncation)与舍入误差(Round-off)：上图展示的是采样后的前向差分法(forward difference)和中心差分法(central difference)的误差，针对函数</em>$f(x)&#x3D;(x−10)^2(3x^2−3x+1)$<em>。</em>$h$使<em>用单精度浮点值，范围为</em>$[10^{−7},1]$<em>。可以看出，刚开始，随着</em>$h$<em>的减小，实际误差随着截断误差的减小而减小，但是当</em>$h$<em>减小到一定程度后，舍入误差就开始占主导地位，导致实际误差反而随着舍入误差的增大而增大。</em></p>
+</blockquote>
+<p>当然，有同学会说，那我们直接用更高精度的数据类型（例如 float64），但这会增加硬件约束，因为需要更多的内存和额外的计算，但这其实是一个完全不必要的权衡。另外，差分法还有一个问题：运行时的复杂性。<br>在输入向量长度为 $n$ 且输出为标量的情况下，我们需要 $O(n)$ 次操作。如果我们有函数 $f:R^n→R^m$，我们大约需要$O(mn)$次操作来计算梯度，这使得对于大值 $m$ 和 $n$ 的计算就变得非常低效。考虑到梯度下降是一个应用于数百万甚至数十亿个参数的迭代过程，差分法明显无法适应。</p>
+<p>那让我们可以转向另一种替代方法，即符号微分法。</p>
+<p>欲知符号微分，且听下回分解！</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a target="_blank" rel="noopener" href="https://rufflewind.com/2016-12-30/reverse-mode-automatic-differentiation">https://rufflewind.com/2016-12-30/reverse-mode-automatic-differentiation</a></p>
+<p><a target="_blank" rel="noopener" href="https://huggingface.co/blog/andmholm/what-is-automatic-differentiation">https://huggingface.co/blog/andmholm/what-is-automatic-differentiation</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/" title="深入浅出反向传播（2）">https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation2/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag"># 反向传播</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2024/06/27/ml/nn/backpropagation1/" rel="prev" title="深入浅出反向传播(1)">
+                  <i class="fa fa-angle-left"></i> 深入浅出反向传播(1)
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

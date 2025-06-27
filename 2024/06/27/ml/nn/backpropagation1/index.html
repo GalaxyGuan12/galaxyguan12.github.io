@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="前言反向传播(Backpropagation) 是神经网络中重要且难以理解的概念之一，甚至可以说如果理解了反向传播的工作机制，你就基本理解了神经网络的工作原理。所以我们从“反向传播”切入，由此揭开神经网络的神秘面纱。学习完之后你会发现，反向传播只是一个非常简单的过程，它告诉我们在神经网络中需要怎么改变参数。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入浅出反向传播(1)">
+<meta property="og:url" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="前言反向传播(Backpropagation) 是神经网络中重要且难以理解的概念之一，甚至可以说如果理解了反向传播的工作机制，你就基本理解了神经网络的工作原理。所以我们从“反向传播”切入，由此揭开神经网络的神秘面纱。学习完之后你会发现，反向传播只是一个非常简单的过程，它告诉我们在神经网络中需要怎么改变参数。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/diagram.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/2.1.PNG">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/2.2.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/2.3.PNG">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/2.4.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/2.5.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/830baccccbc74e36b2e3729c3e9d33f4.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/77902317ffd044b294766017a446d3bd.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/53ce238aa27147b686263ab1dd94df2b.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/fbb3e8d22bd54fcd90e17a1308f8a296.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/bdd59433fcc24077a3ba6c4608808295.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/f926a910af9f433d92a3d497e5c755d7.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/7bef145fdc06489bad47a31a57f66978.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/9cadfdc954b54199b4f0c0fe3bc5c6c4.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/db83d86e24d04c14a9698a071aa4b367.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/eab81293cb8d457ea5ad8ba714962889.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/06f371bba5c64f2f84b88425a375f966.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/dbbf82a48dca468ea4fa2a20c2532f64.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/332c739d366c4b3485fa61cd1997ad70.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/10b74343260e4fca872feadbdd6647f1.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/073e74516b00485eb2da3a62950f12ed.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/45f11173d3a14ca7b0e1db70780371a8.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/79878352d4844f2f93f582c3f920b236.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/022f8ab4da384e52aedf8bf54766de75.png">
+<meta property="article:published_time" content="2024-06-27T00:30:53.000Z">
+<meta property="article:modified_time" content="2025-06-27T02:30:56.116Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="反向传播">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/diagram.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/","path":"2024/06/27/ml/nn/backpropagation1/","title":"深入浅出反向传播(1)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>深入浅出反向传播(1) | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-number">2.</span> <span class="nav-text">神经网络的本质</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BA%BF%E6%80%A7%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">线性问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E8%A7%A3%E7%9A%84%E4%B8%8D%E5%8F%AF%E8%A1%8C%E6%80%A7"><span class="nav-number">3.1.</span> <span class="nav-text">解析解的不可行性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D"><span class="nav-number">3.2.</span> <span class="nav-text">梯度下降与随机梯度下降</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99"><span class="nav-number">3.3.</span> <span class="nav-text">链式法则</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9D%9E%E7%BA%BF%E6%80%A7%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">非线性问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0"><span class="nav-number">4.1.</span> <span class="nav-text">激活函数</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用碎片化时间学习系统化知识，用递归深入问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用碎片化时间学习系统化知识，用递归深入问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="深入浅出反向传播(1) | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入浅出反向传播(1)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2024-06-27 08:30:53" itemprop="dateCreated datePublished" datetime="2024-06-27T08:30:53+08:00">2024-06-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">机器学习</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">神经网络</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><strong>反向传播(Backpropagation)</strong> 是神经网络中重要且难以理解的概念之一，甚至可以说如果理解了反向传播的工作机制，你就基本理解了神经网络的工作原理。所以我们从“反向传播”切入，由此揭开神经网络的神秘面纱。学习完之后你会发现，反向传播只是一个非常简单的过程，它告诉我们在神经网络中需要怎么改变参数。</p>
+<span id="more"></span>
+
+<hr>
+<h1 id="神经网络的本质"><a href="#神经网络的本质" class="headerlink" title="神经网络的本质"></a>神经网络的本质</h1><p>神经网络的本质其实就是<strong>根据数据集（点）拟合预测&#x2F;推理函数（曲线）</strong>，所以简单来说神经网络其实是一个“极为复杂的曲线拟合机器”。 如下图所示，左图的点作为训练数据，神经网络经过训练之后会拟合处右图的曲线，这样对新数据x，可以预测&#x2F;推理出y的值。<br><img src="/2024/06/27/ml/nn/backpropagation1/diagram.png"></p>
+<h1 id="线性问题"><a href="#线性问题" class="headerlink" title="线性问题"></a>线性问题</h1><p>为了简单起见，我们使用一个线性回归模型作为示例来演示。显然，我们在对训练数据拟合成函数（曲线）之前，需要先假设一个预测的函数，如 y &#x3D; weight * x + bias。有了预测函数之后，我们就可以对每个数据计算损失（实际值和预测值的偏差）。这里我们使用 <strong>MSE（mean squared error loss 均方误差）</strong> 作为损失函数, 针对预测函数中参数的不同值，我们都可以计算出这批训练数据的总的损失。<br><img src="/2024/06/27/ml/nn/backpropagation1/2.1.PNG"><br>如下图，直线是我们假设的预测函数，图上的点是训练数据。我们试着调整weight 和 bias 的值，看看损失如何变化。<br><img src="/2024/06/27/ml/nn/backpropagation1/2.2.gif"><br>上面提到，我们要让损失函数的值最小才能得到最完美的预测函数， 那我们先看看损失函数的图形，如下图。x、y轴分别表示 weight 和 bias， z 轴的值就是对应的损失值。大家想想，怎样才能找到损失值最小的位置（weight 和 bias）？<br><img src="/2024/06/27/ml/nn/backpropagation1/2.3.PNG"><br>由此引出梯度（导数，在某个位置的瞬时变化率）的定义。下面的公式给的是只有一个变量x 的情况。因此我们还是先从简单的图形入手。<br><img src="/2024/06/27/ml/nn/backpropagation1/2.4.png"><br>假设损失函数 <strong>loss &#x3D; x^2 - 1,</strong> 我们得到下面的图形：<br><img src="/2024/06/27/ml/nn/backpropagation1/2.5.png"><br>虽然肉眼很容易能看出来最小值在哪个位置，但是对于计算机来说却很难，尤其是函数非常复杂的时候。那怎么才能找到让 loss 最（极）小的位置呢？ 首先，我们观察这个图形，在什么情况下 loss 值最小？是不是当梯度为0或者梯度接近于0的时候 loss 最（极）小。这个时候，有人可能会说，那直接令 梯度&#x3D;0，解析出这个函数的变量x值就行了吧（<strong>求解析解</strong>）？<br>其实不然，为什么?</p>
+<h2 id="解析解的不可行性"><a href="#解析解的不可行性" class="headerlink" title="解析解的不可行性"></a>解析解的不可行性</h2><p><strong>1. 解析解的不可行性，数学复杂度</strong>：<br>对于绝大多数模型（如神经网络、支持向量机等），损失函数是高维非线性的，其梯度方程（∇L(θ)&#x3D;0）常无法分解为闭式解（closed-form solution）。例如：</p>
+<ul>
+<li>线性回归可以求得解析解（θ&#x3D;(XᵀX)⁻¹Xᵀy），但仅因模型是凸且线性。</li>
+<li>对复杂模型（如深度学习），损失函数的高度非线性导致方程求解需要多项式时间之外的计算量。</li>
+</ul>
+<p><strong>2. 计算资源限制, 维数灾难</strong>，高维参数空间的矩阵运算代价极高。例如：</p>
+<ul>
+<li>当参数维度为n时，求解线性方程组的计算复杂度为O(n³)，而n&#x3D;1e⁶时需1e¹⁸次运算。</li>
+<li>实际深度学习模型的参数规模可达1e⁹量级（如GPT-3），直接求解完全不现实。</li>
+</ul>
+<p><strong>3. 非凸优化问题,局部极小值与鞍点</strong>：</p>
+<ul>
+<li>非凸损失函数（如神经网络的损失函数）的梯度为零点可能是局部极小值或鞍点，而全局极小值难以定位。</li>
+<li>鞍点尤其在高维空间中普遍存在（概率随维度指数级增长），直接求解梯度为零可能落入低质量解。</li>
+</ul>
+<p><strong>4. 数据驱动动态优化,在线学习与大数据场景</strong>：</p>
+<ul>
+<li>当数据集过大时，直接求解需一次性加载全体数据（内存不足问题）。</li>
+</ul>
+<h2 id="梯度下降与随机梯度下降"><a href="#梯度下降与随机梯度下降" class="headerlink" title="梯度下降与随机梯度下降"></a>梯度下降与随机梯度下降</h2><p>ok，那我们想想如果不用解析解，你会怎么找到最小值？显然，聪明的你肯定会想到这样做：<br><strong>Prepare</strong>阶段：使用训练数据求出损失函数（正向传播）</p>
+<ol>
+<li>随机初始化一个位置值 x1</li>
+<li>计算x1处的梯度d1</li>
+<li>计算 步长&#x3D;d1 * 学习率（通过调参设置）（这里你会发现一个很巧妙的地方，离最优点越远，步长越长）</li>
+<li>更新位置 x2 &#x3D; x1 - 步长 &#x3D; x1 - d1 * 学习率</li>
+<li>循环执行，直到梯度接近0 或者 步数达到最大值</li>
+</ol>
+<p>恭喜，你发明了<strong>梯度下降</strong>算法。</p>
+<p>在继续之前，大家想想这个算法有没有什么问题？如果训练数据量非常大，我们的损失函数就会异常复杂，因为计算损失函数时需要将参数加载到内存&#x2F;显存中，过大的训练数据显然无法运行。怎么办？</p>
+<p><strong>把全量数据（epoch）按固定大小随机分组，每次只拿这一组的数据（batch）计算损失函数。</strong></p>
+<p>恭喜，你发明了<strong>随机梯度下降</strong>算法。</p>
+<p>以上只是一个参数的情况，如果涉及两个参数比如 weight 和 bias，该怎么处理？<br>还是让我们先回到一开始的预测函数 y &#x3D; weight * x + bias。 这里的两个参数weight 和 bias 都会影响 loss值 ，那我们需要计算每个参数对loss的影响程度，即偏导数（梯度），然后根据偏导数不断迭代更新相应参数的值，从而找到最优解（loss 最小）。我们看看有两个参数时，loss的变化情况，为简单起见，我们用二维等高线来画。</p>
+<p><img src="/2024/06/27/ml/nn/backpropagation1/830baccccbc74e36b2e3729c3e9d33f4.png"><br>用loss的颜色深浅表示loss值。从图上能很明显看出当 weight &#x3D; -1， bias &#x3D; 5时loss为0，也就是我们的目标优化位置。</p>
+<p>举个例子，顺便复习一下刚刚<strong>梯度下降</strong>的步骤，让我们试着从图上随机取点来优化我们的参数（<strong>初始化</strong>）。</p>
+<p><strong>第二步 需要分别计算两个参数在这个位置的偏导数（梯度）</strong><br><img src="/2024/06/27/ml/nn/backpropagation1/77902317ffd044b294766017a446d3bd.png"></p>
+<p><strong>第三步：分别计算两个参数的步长，第四步： 更新w 和 b</strong><br><img src="/2024/06/27/ml/nn/backpropagation1/53ce238aa27147b686263ab1dd94df2b.png"><br>回顾以上步骤，大家再想想哪一步是比较难的？ </p>
+<p>对，<strong>第3步，怎么计算损失函数的梯度值？</strong></p>
+<h2 id="链式法则"><a href="#链式法则" class="headerlink" title="链式法则"></a>链式法则</h2><p>先看下这张图：<br><img src="/2024/06/27/ml/nn/backpropagation1/fbb3e8d22bd54fcd90e17a1308f8a296.gif"><br>如果你想知道蓝色值（loss）如何被粉色值（参数）影响，你会怎么观察？<br>先从蓝色值开始：</p>
+<ol>
+<li>观察蓝色值被橘色值影响的程度</li>
+<li>观察橘色值被绿色值影响的程度</li>
+<li>观察绿色值被粉色值影响的程度</li>
+</ol>
+<p>恭喜，你发明了<strong>链式法则</strong>！ 看公式：</p>
+<p><img src="/2024/06/27/ml/nn/backpropagation1/bdd59433fcc24077a3ba6c4608808295.png"><br>注意，这里的neuron就是预测函数y。当你想知道loss被w的影响程度（loss 关于 w的梯度）， 你可以先计算loss被neuron（预测值）的影响程度，再计算neuron（预测值）被w的影响程度，两个相乘，你就得到了loss 关于 w的梯度。 再观察下，我们是从后往前计算梯度（loss -&gt; 预测值 -&gt; 参数），这也是反向传播这一名词的由来，这样做的好处是可以利用前向传播过程中的计算结果，而不需要重复计算，节约资源和时间。</p>
+<p>ok，来看一个具体的示例。<br>对于 y&#x3D;wx + b， 我们假设有一条训练数据（x&#x3D;2.1， y&#x3D;4），w&#x3D;1，b&#x3D;0<br><img src="/2024/06/27/ml/nn/backpropagation1/f926a910af9f433d92a3d497e5c755d7.png"><br>正向传播：<br><img src="/2024/06/27/ml/nn/backpropagation1/7bef145fdc06489bad47a31a57f66978.png"><br>反向传播：<br><img src="/2024/06/27/ml/nn/backpropagation1/9cadfdc954b54199b4f0c0fe3bc5c6c4.png"><br><img src="/2024/06/27/ml/nn/backpropagation1/db83d86e24d04c14a9698a071aa4b367.png"><br>分别更新参数，这里我们设置<strong>学习率</strong>为 0.1 （lr &#x3D; 0.1），学习率的更新也是人工&#x2F;自动调参的一部分：<br><img src="/2024/06/27/ml/nn/backpropagation1/eab81293cb8d457ea5ad8ba714962889.png"><br>看看更新参数后<strong>loss</strong>值：<br><img src="/2024/06/27/ml/nn/backpropagation1/06f371bba5c64f2f84b88425a375f966.png"><br>3.61 -&gt; 2.87， <strong>loss</strong> 下降了！</p>
+<h1 id="非线性问题"><a href="#非线性问题" class="headerlink" title="非线性问题"></a>非线性问题</h1><p>还是回到一开始的图，如果是这些点，你会怎么选择函数来拟合呢？<br><img src="/2024/06/27/ml/nn/backpropagation1/dbbf82a48dca468ea4fa2a20c2532f64.png"><br>聪明的你可能会想到用一个相对复杂的嵌套函数来拟合这个曲线：<br>y&#x3D; log(1 + e^(w11 * x + b11)) * w21 + log(1 + e^(w12 * x + b12)) * w22 + b2</p>
+<p>恭喜，你发明了<strong>神经网络</strong>！</p>
+<p>也就是说，上面的公式其实可以用一个简单的神经网络结构来表示：<br><img src="/2024/06/27/ml/nn/backpropagation1/332c739d366c4b3485fa61cd1997ad70.png"><br>那么它的<strong>正向传播</strong>过程就可以表示为：<br><img src="/2024/06/27/ml/nn/backpropagation1/10b74343260e4fca872feadbdd6647f1.png"><br>而反向传播计算梯度的过程就可以这样表示，这里就以w21和w11为例：</p>
+<p><img src="/2024/06/27/ml/nn/backpropagation1/073e74516b00485eb2da3a62950f12ed.png"><br><strong>注意：</strong> 如果在计算某个参数w11的梯度时用到了另一个参数w21的值，w21的值应该取当前值，而不是优化后的值。等计算完梯度，再统一对所有参数进行迭代更新。</p>
+<p>到这里，我们应该能发现，为了拟合更加复杂的曲线，我们可以在每层添加更多神经元、更多层以及在输出中添加非线性（激活函数）来实现。如果我们把整个神经网络视为一个函数，那么通过添加更多神经元和更多层，我们就可以创建一个嵌套更多的函数。这样做有几大好处：</p>
+<ol>
+<li>创建了更多可以调整的参数来拟合输出结果</li>
+<li>保证可微： 可以计算梯度，也就是没有尖锐拐角或断层</li>
+<li>通过添加具有失活点的非线性激活函数，某些神经元可能对输出没有影响，而其他神经元可能变得更加活跃，从而导致输出不必遵循线性约束。</li>
+</ol>
+<h2 id="激活函数"><a href="#激活函数" class="headerlink" title="激活函数"></a>激活函数</h2><p>我们这里使用的是<strong>softplus</strong>作为<strong>激活函数</strong>：<br><img src="/2024/06/27/ml/nn/backpropagation1/45f11173d3a14ca7b0e1db70780371a8.png"><br>还有比较常见的激活函数：<br>常见激活函数：</p>
+<ul>
+<li>Relu：<br><img src="/2024/06/27/ml/nn/backpropagation1/79878352d4844f2f93f582c3f920b236.png"></li>
+<li>sigmoid：<br><img src="/2024/06/27/ml/nn/backpropagation1/022f8ab4da384e52aedf8bf54766de75.png"></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/" title="深入浅出反向传播(1)">https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD/" rel="tag"># 反向传播</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2024/06/27/ml/nn/backpropagation2/" rel="next" title="深入浅出反向传播（2）">
+                  深入浅出反向传播（2） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
