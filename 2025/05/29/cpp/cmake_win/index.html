@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="背景使用C++编写的一个小项目，需要打包成windows下的可执行文件（免安装版本），方便分发给其他windows执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++ Windows 打包exe运行方案（cmake）">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="背景使用C++编写的一个小项目，需要打包成windows下的可执行文件（免安装版本），方便分发给其他windows执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/image.png">
+<meta property="article:published_time" content="2025-05-29T11:39:38.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.890Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="cmake">
+<meta property="article:tag" content="Windows">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/image.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/","path":"2025/05/29/cpp/cmake_win/","title":"C++ Windows 打包exe运行方案（cmake）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++ Windows 打包exe运行方案（cmake） | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E6%A2%B3%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">动态库梳理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%93%E5%8C%85%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">打包方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BD%BF%E7%94%A8-Vcpkg-%E5%AE%89%E8%A3%85%E9%9D%99%E6%80%81%E5%BA%93%EF%BC%88%E5%85%B3%E9%94%AE%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE%EF%BC%89"><span class="nav-number">3.1.</span> <span class="nav-text">一、使用 Vcpkg 安装静态库（关键基础配置）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96-Vcpkg"><span class="nav-number">3.1.1.</span> <span class="nav-text">1. 初始化 Vcpkg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%AE%89%E8%A3%85%E9%9D%99%E6%80%81%E5%BA%93%EF%BC%88%E6%B3%A8%E6%84%8F-x64-windows-static-%E5%90%8E%E7%BC%80%EF%BC%89"><span class="nav-number">3.1.2.</span> <span class="nav-text">2. 安装静态库（注意 x64-windows-static 后缀）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81CMakeLists-txt-%E5%85%B3%E9%94%AE%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">二、CMakeLists.txt 关键配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%BC%96%E8%AF%91"><span class="nav-number">3.3.</span> <span class="nav-text">三、编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E9%AA%8C%E8%AF%81"><span class="nav-number">3.4.</span> <span class="nav-text">四、验证</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%8D%E5%90%8C%E5%B9%B3%E5%8F%B0%E4%BB%A3%E7%A0%81%E5%85%BC%E5%AE%B9"><span class="nav-number">4.</span> <span class="nav-text">不同平台代码兼容</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#attribute-packed-%E5%85%BC%E5%AE%B9"><span class="nav-number">4.1.</span> <span class="nav-text">__attribute__((packed)) 兼容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#include-%E5%85%BC%E5%AE%B9"><span class="nav-number">4.2.</span> <span class="nav-text">#include &lt;arpa&#x2F;inet.h&gt; 兼容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#time%E5%85%BC%E5%AE%B9"><span class="nav-number">4.3.</span> <span class="nav-text">time兼容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#timezone%E5%85%BC%E5%AE%B9"><span class="nav-number">4.4.</span> <span class="nav-text">timezone兼容</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++ Windows 打包exe运行方案（cmake） | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++ Windows 打包exe运行方案（cmake）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-05-29 19:39:38" itemprop="dateCreated datePublished" datetime="2025-05-29T19:39:38+08:00">2025-05-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>使用C++编写的一个小项目，需要打包成windows下的可执行文件（免安装版本），方便分发给其他windows执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。</p>
+<span id="more"></span>
+
+<h1 id="动态库梳理"><a href="#动态库梳理" class="headerlink" title="动态库梳理"></a>动态库梳理</h1><p>经过依赖精简和梳理，项目最终必须依赖的动态库包括：pcl, bzip2, lz4, yaml, rosbag(用于读取rosbag包,后续会有专门的文章会提到如何做到不依赖ros环境)</p>
+<h1 id="打包方案"><a href="#打包方案" class="headerlink" title="打包方案"></a>打包方案</h1><p>yaml动态库在前面的文章中已经转成了静态库代码的形式包含在了项目里。对于其他动态库，简单调研了一下，发现可以使用 <code>vcpkg 工具</code> 将所有动态库以静态库的形式来安装，那就尝试用这个方案。</p>
+<h2 id="一、使用-Vcpkg-安装静态库（关键基础配置）"><a href="#一、使用-Vcpkg-安装静态库（关键基础配置）" class="headerlink" title="一、使用 Vcpkg 安装静态库（关键基础配置）"></a>一、使用 Vcpkg 安装静态库（关键基础配置）</h2><h3 id="1-初始化-Vcpkg"><a href="#1-初始化-Vcpkg" class="headerlink" title="1. 初始化 Vcpkg"></a>1. 初始化 Vcpkg</h3><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 克隆 vcpkg 仓库</span></span><br><span class="line">git clone https://github.com/microsoft/vcpkg</span><br><span class="line"><span class="comment"># 构建 vcpkg</span></span><br><span class="line">.\vcpkg\bootstrap<span class="literal">-vcpkg</span>.bat</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-安装静态库（注意-x64-windows-static-后缀）"><a href="#2-安装静态库（注意-x64-windows-static-后缀）" class="headerlink" title="2. 安装静态库（注意 x64-windows-static 后缀）"></a>2. 安装静态库（注意 <code>x64-windows-static</code> 后缀）</h3><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装核心依赖</span></span><br><span class="line">.\vcpkg.exe install bzip2:x64<span class="literal">-windows-static</span> lz4:x64<span class="literal">-windows-static</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 PCL 及其全套依赖（耗时约 30-60 分钟），可能需要科学上网</span></span><br><span class="line">.\vcpkg.exe install pcl:x64<span class="literal">-windows-static</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、CMakeLists-txt-关键配置"><a href="#二、CMakeLists-txt-关键配置" class="headerlink" title="二、CMakeLists.txt 关键配置"></a>二、CMakeLists.txt 关键配置</h2><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.5</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">14</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_TOOLCHAIN_FILE <span class="string">&quot;your_path/vcpkg/scripts/buildsystems/vcpkg.cmake&quot;</span>)</span><br><span class="line"><span class="keyword">project</span>(project_name)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 强制使用静态运行时库</span></span><br><span class="line"><span class="keyword">if</span>(MSVC)</span><br><span class="line">    <span class="comment"># 静态链接运行时（/MT 或 /MTd）</span></span><br><span class="line">    <span class="keyword">set</span>(CMAKE_MSVC_RUNTIME_LIBRARY <span class="string">&quot;MultiThreaded$&lt;$&lt;CONFIG:Debug&gt;:Debug&gt;&quot;</span>)</span><br><span class="line">    <span class="comment"># 删除所有可能存在的动态运行时选项, 防止依赖冲突报错</span></span><br><span class="line">    <span class="keyword">string</span>(REGEX REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> CMAKE_CXX_FLAGS <span class="variable">$&#123;CMAKE_CXX_FLAGS&#125;</span>)</span><br><span class="line">    <span class="keyword">string</span>(REGEX REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> CMAKE_CXX_FLAGS_RELEASE <span class="variable">$&#123;CMAKE_CXX_FLAGS_RELEASE&#125;</span>)</span><br><span class="line">    <span class="keyword">string</span>(REGEX REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> CMAKE_CXX_FLAGS_DEBUG <span class="variable">$&#123;CMAKE_CXX_FLAGS_DEBUG&#125;</span>)</span><br><span class="line">    <span class="keyword">add_compile_options</span>(/MP)  <span class="comment"># 启用多核编译（可选）</span></span><br><span class="line">    <span class="keyword">add_definitions</span>(-DNOMINMAX)  <span class="comment"># Avoid conflicts with min/max macros like error C2589: “(”:“::”右边的非法标记</span></span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"><span class="comment"># 添加子目录编译 yaml-cpp 库</span></span><br><span class="line"><span class="keyword">add_subdirectory</span>(thirdparty/yaml-cpp)</span><br><span class="line"></span><br><span class="line"><span class="keyword">find_package</span>(BZip2 REQUIRED)</span><br><span class="line"><span class="keyword">find_package</span>(LZ4 REQUIRED)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这里只依赖了 io 这一个components，其他组件可以按需添加</span></span><br><span class="line"><span class="keyword">find_package</span>(PCL REQUIRED COMPONENTS io)</span><br><span class="line"><span class="keyword">if</span>(PCL_FOUND)</span><br><span class="line">    <span class="keyword">message</span>(<span class="string">&quot;PCL FOUND&quot;</span>)</span><br><span class="line">    <span class="keyword">include_directories</span>(<span class="variable">$&#123;PCL_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">else</span>()</span><br><span class="line">    <span class="keyword">message</span>(WARNING <span class="string">&quot;can not find PCL&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(MyApp ...)</span><br><span class="line"><span class="keyword">target_include_directories</span>(MyApp PUBLIC </span><br><span class="line">  <span class="variable">$&#123;PCL_INCLUDE_DIRS&#125;</span></span><br><span class="line">  <span class="variable">$&#123;CMAKE_SOURCE_DIR&#125;</span>/thirdparty/yaml-cpp/<span class="keyword">include</span></span><br><span class="line">  ...</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(MyApp PUBLIC </span><br><span class="line">  yaml-cpp</span><br><span class="line">  BZip2::BZip2</span><br><span class="line">  LZ4::lz4_static</span><br><span class="line">  <span class="variable">$&#123;PCL_LIBRARIES&#125;</span></span><br><span class="line">  ws2_32</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="三、编译"><a href="#三、编译" class="headerlink" title="三、编译"></a>三、编译</h2><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 生成构建系统</span></span><br><span class="line">cmake <span class="literal">-B</span> build <span class="literal">-DCMAKE_BUILD_TYPE</span>=Release <span class="literal">-DVCPKG_TARGET_TRIPLET</span>=x64<span class="literal">-windows-static</span> <span class="literal">-DCMAKE_TOOLCHAIN_FILE</span>=<span class="string">&quot;your_path/vcpkg/scripts/buildsystems/vcpkg.cmake&quot;</span></span><br><span class="line"><span class="comment"># 2. 编译项目</span></span><br><span class="line">cmake <span class="literal">--build</span> build <span class="literal">--config</span> Release <span class="literal">--parallel</span> <span class="number">8</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="四、验证"><a href="#四、验证" class="headerlink" title="四、验证"></a>四、验证</h2><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 验证依赖项, 需要</span></span><br><span class="line">dumpbin /dependents build/Release/MyApp.exe</span><br></pre></td></tr></table></figure>
+
+<p><strong>预期输出应该只包含以下系统库：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">KERNEL32.dll</span><br><span class="line">USER32.dll</span><br><span class="line">...</span><br><span class="line">不会有其他第三方 DLL（如 boost_*.dll, pcl_*.dll 等）</span><br></pre></td></tr></table></figure>
+
+<p>注意：dumpbin 命令为VisualStudio的工具：</p>
+<p><img src="/2025/05/29/cpp/cmake_win/image.png"></p>
+<h1 id="不同平台代码兼容"><a href="#不同平台代码兼容" class="headerlink" title="不同平台代码兼容"></a>不同平台代码兼容</h1><h2 id="attribute-packed-兼容"><a href="#attribute-packed-兼容" class="headerlink" title="__attribute__((packed)) 兼容"></a>__attribute__((packed)) 兼容</h2><p>以下代码中的<code>__attribute__((packed))</code> 与编译平台Unix&#x2F;Linux强相关：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">MyStruct_s</span></span><br><span class="line">&#123;</span><br><span class="line">   <span class="type">int</span> a;</span><br><span class="line">   <span class="type">char</span> b;</span><br><span class="line">&#125;__attribute__((packed)) MyStruct;</span><br></pre></td></tr></table></figure>
+
+<p>需要做出针对windows的兼容性修改：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 根据编译器类型选择内存对齐语法，建议在 common.h 中定义</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> defined(_MSC_VER)</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_BEGIN __pragma(pack(push, 1))</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_END   __pragma(pack(pop))</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_STRUCT  <span class="comment">/* MSVC 下无需额外关键字 */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(__GNUC__) || defined(__clang__)</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_BEGIN</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_END</span></span><br><span class="line">    <span class="meta">#<span class="keyword">define</span> PACKED_STRUCT  __attribute__((packed))</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用方式：</span></span><br><span class="line">PACKED_BEGIN</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">MyStruct</span> &#123;</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="type">char</span> b;</span><br><span class="line">&#125; PACKED_STRUCT;</span><br><span class="line">PACKED_END</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="include-兼容"><a href="#include-兼容" class="headerlink" title="#include &lt;arpa&#x2F;inet.h&gt; 兼容"></a>#include &lt;arpa&#x2F;inet.h&gt; 兼容</h2><p><code>arpa/inet.h</code> 是Unix&#x2F;Linux特有的头文件 ，而Windows平台没有这个头文件。</p>
+<p>看代码中需要用到的只有<code>ntohs</code> ，windows上对应的头文件为<code>&lt;winsock2.h&gt;</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(_WIN32) || defined(_WIN64)</span></span><br><span class="line">    <span class="meta">#<span class="keyword">include</span> <span class="string">&lt;winsock2.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    <span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>依赖的库为<code>ws2_32.lib</code>，需要在CMakeLists.txt中显式链接，否则编译会报错：error LNK2001: 无法解析的外部符号 __imp_ntohs, 参考 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/chai51/p/16931965.html">https://www.cnblogs.com/chai51/p/16931965.html</a></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">target_link_libraries</span>(MyApp PUBLIC </span><br><span class="line">  ...</span><br><span class="line">  ws2_32</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="time兼容"><a href="#time兼容" class="headerlink" title="time兼容"></a>time兼容</h2><p>&lt;time.h&gt; 为Unix&#x2F;Linux 平台下独有，比如 <code>clock_gettime(CLOCK_MONOTONIC, &amp;time) </code>，在windows上兼容方案如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(_WIN32) || defined(_WIN64)</span></span><br><span class="line">    <span class="meta">#<span class="keyword">include</span> <span class="string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    <span class="meta">#<span class="keyword">include</span> <span class="string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="function"><span class="type">unsigned</span> <span class="type">int</span> <span class="title">GetMicroTickCount</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> ret = <span class="number">0</span>;</span><br><span class="line">  <span class="meta">#<span class="keyword">if</span> defined(_WIN32) || defined(_WIN64)</span></span><br><span class="line">     <span class="comment">// Windows implementation using QueryPerformanceCounter</span></span><br><span class="line">    <span class="type">static</span> LARGE_INTEGER frequency;</span><br><span class="line">    <span class="type">static</span> BOOL frequencyInitialized = <span class="built_in">QueryPerformanceFrequency</span>(&amp;frequency);</span><br><span class="line">    <span class="keyword">if</span> (!frequencyInitialized) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// If the frequency cannot be initialized, return 0</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    LARGE_INTEGER counter;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">QueryPerformanceCounter</span>(&amp;counter)) &#123;</span><br><span class="line">      ret = <span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span> <span class="type">int</span>&gt;((counter.QuadPart * <span class="number">1000000</span>) / frequency.QuadPart);</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    timespec time;</span><br><span class="line">    <span class="built_in">memset</span>(&amp;time, <span class="number">0</span>, <span class="built_in">sizeof</span>(time));</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">clock_gettime</span>(CLOCK_MONOTONIC, &amp;time) == <span class="number">0</span>) &#123;</span><br><span class="line">      ret = time.tv_nsec / <span class="number">1000</span> + time.tv_sec * <span class="number">1000000</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">  <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="timezone兼容"><a href="#timezone兼容" class="headerlink" title="timezone兼容"></a>timezone兼容</h2><p>同上， <code>timezone</code>关键词也是 Unix&#x2F;Linux 独有，兼容方案如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _WIN32</span></span><br><span class="line">  <span class="comment">// Windows: Use _get_timezone with a temporary long variable</span></span><br><span class="line">  <span class="type">long</span> temp_offset = <span class="number">0</span>;</span><br><span class="line">  _get_timezone(&amp;temp_offset);</span><br><span class="line">  time_offset = <span class="built_in">static_cast</span>&lt;<span class="type">int64_t</span>&gt;(temp_offset);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">  <span class="comment">// Linux: Use timezone global variable</span></span><br><span class="line">  <span class="keyword">extern</span> <span class="type">long</span> timezone;</span><br><span class="line">  time_offset = timezone;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="keyword">return</span> (raw_time - time_offset) * <span class="number">1000000</span> + <span class="built_in">GetTimestamp</span>();</span><br></pre></td></tr></table></figure>
+
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/" title="C++ Windows 打包exe运行方案（cmake）">https://galaxyguan12.github.io/2025/05/29/cpp/cmake_win/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/cmake/" rel="tag"># cmake</a>
+              <a href="/tags/Windows/" rel="tag"># Windows</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/05/21/ml/llm/rag1/" rel="prev" title="RAG全流程解析">
+                  <i class="fa fa-angle-left"></i> RAG全流程解析
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/05/29/ml/llm/llm_in_action1/" rel="next" title="大模型应用实战（1）-基本概念">
+                  大模型应用实战（1）-基本概念 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

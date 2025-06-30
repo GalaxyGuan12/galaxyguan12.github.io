@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="这篇文章演示了如何构建一个advanced RAG（检索增强生成），来回答用户关于特定知识库（这里是 HuggingFace 中相关文档）的问题，文章代码使用了 LangChain。要了解 RAG 的基本内容和介绍，可以查看这篇文章。RAG 系统很复杂，包含很多部分，下图描述了 RAG 中的关键部分，蓝色标注的内容是可以被持续优化的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAG全流程解析">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="这篇文章演示了如何构建一个advanced RAG（检索增强生成），来回答用户关于特定知识库（这里是 HuggingFace 中相关文档）的问题，文章代码使用了 LangChain。要了解 RAG 的基本内容和介绍，可以查看这篇文章。RAG 系统很复杂，包含很多部分，下图描述了 RAG 中的关键部分，蓝色标注的内容是可以被持续优化的。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/d05ef3bf13d879bf2560a30566164974.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/chunk_sizes_char.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/%E6%88%AA%E5%B1%8F2025-05-21%2015.22.24.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/chunk_sizes2.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/embedding_projection.png">
+<meta property="article:published_time" content="2025-05-21T14:36:39.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.994Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/d05ef3bf13d879bf2560a30566164974.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/","path":"2025/05/21/ml/llm/rag1/","title":"RAG全流程解析"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RAG全流程解析 | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">1.</span> <span class="nav-text">环境准备</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A0%E8%BD%BD"><span class="nav-number">2.</span> <span class="nav-text">知识库加载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1-Retriever-embeddings-%F0%9F%97%82%EF%B8%8F"><span class="nav-number">3.</span> <span class="nav-text">1. Retriever - embeddings 🗂️</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-%E5%B0%86%E6%96%87%E6%A1%A3%E6%8B%86%E5%88%86%E4%B8%BAchunks"><span class="nav-number">3.1.</span> <span class="nav-text">1.1 将文档拆分为chunks</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-%E8%AF%8D%E5%B5%8C%E5%85%A5"><span class="nav-number">3.2.</span> <span class="nav-text">1.2 词嵌入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-3-%E6%9E%84%E5%BB%BA%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">3.3.</span> <span class="nav-text">1.3 构建向量数据库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Nearest-Neighbor-search-algorithm-%EF%BC%88%E6%9C%80%E8%BF%91%E9%82%BB%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%EF%BC%89"><span class="nav-number">3.3.1.</span> <span class="nav-text">Nearest Neighbor search algorithm （最近邻搜索算法）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Distances-%EF%BC%88%E8%B7%9D%E7%A6%BB%EF%BC%89"><span class="nav-number">3.3.2.</span> <span class="nav-text">Distances （距离）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%82%B9%E7%A7%AF%EF%BC%88Dot-Product%EF%BC%89%EF%BC%9A"><span class="nav-number">3.3.2.1.</span> <span class="nav-text">点积（Dot Product）：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%EF%BC%88Cosine-Similarity%EF%BC%89%EF%BC%9A"><span class="nav-number">3.3.2.2.</span> <span class="nav-text">余弦相似度（Cosine Similarity）：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AC%A7%E5%BC%8F%E8%B7%9D%E7%A6%BB%EF%BC%88Euclidean-Distance%EF%BC%89%E5%85%AC%E5%BC%8F"><span class="nav-number">3.3.2.3.</span> <span class="nav-text">欧式距离（Euclidean Distance）公式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-4-%E9%87%8D%E6%8E%92%E5%BA%8F-Reranking"><span class="nav-number">3.4.</span> <span class="nav-text">1.4 重排序(Reranking)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Colbertv2"><span class="nav-number">3.4.1.</span> <span class="nav-text">Colbertv2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bi-encoder-vs-Cross-encoder"><span class="nav-number">3.4.2.</span> <span class="nav-text">Bi-encoder vs Cross-encoder</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-Reader-LLM-%F0%9F%92%AC"><span class="nav-number">4.</span> <span class="nav-text">2. Reader - LLM 💬</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-Reader-model"><span class="nav-number">4.1.</span> <span class="nav-text">2.1. Reader model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-Prompt"><span class="nav-number">4.2.</span> <span class="nav-text">2.2. Prompt</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">4.3.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-%E5%86%85%E5%AE%B9%E6%95%B4%E5%90%88"><span class="nav-number">5.</span> <span class="nav-text">3. 内容整合</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RAG全流程解析 | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RAG全流程解析
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-05-21 22:36:39" itemprop="dateCreated datePublished" datetime="2025-05-21T22:36:39+08:00">2025-05-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">机器学习</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/" itemprop="url" rel="index"><span itemprop="name">大语言模型</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>这篇文章演示了如何构建一个advanced RAG（检索增强生成），来回答用户关于特定知识库（这里是 HuggingFace 中相关文档）的问题，文章代码使用了 LangChain。<br>要了解 RAG 的基本内容和介绍，可以查看<a target="_blank" rel="noopener" href="https://huggingface.co/learn/cookbook/rag_zephyr_langchain">这篇文章</a>。<br>RAG 系统很复杂，包含很多部分，下图描述了 RAG 中的关键部分，蓝色标注的内容是可以被持续优化的。</p>
+<span id="more"></span>
+
+
+<p><img src="/2025/05/21/ml/llm/rag1/d05ef3bf13d879bf2560a30566164974.png"></p>
+<blockquote>
+<p>💡 从上图能看出来，RAG 架构中有许多步骤是可以优化的，正确的优化会带来显著的效果提升。</p>
+</blockquote>
+<p>在这篇文章中，我们会重点关注蓝色内容，来调整我们自己的 RAG 系统来获得最佳效果。</p>
+<p>现在，让我们把手弄脏，直接跟着文章的思路来了解RAG的优化过程。</p>
+<h1 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h1><p>在开始之前，我们需要装好如下依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 建议使用conda创建一个干净的虚拟环境</span></span><br><span class="line">conda create --name huggingface python=3.10 -y</span><br><span class="line">conda activate huggingface</span><br><span class="line">pip install torch transformers accelerate bitsandbytes langchain sentence-transformers openpyxl pacmap datasets langchain-community ragatouille faiss</span><br></pre></td></tr></table></figure>
+
+<p>faiss安装可能会出现问题，解决方案:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ pip install faiss-cpu</span><br><span class="line"><span class="comment"># or: </span></span><br><span class="line">$ pip install faiss-gpu-cu12 <span class="comment"># CUDA 12.x, Python 3.8+</span></span><br><span class="line">$ pip install faiss-gpu-cu11 <span class="comment"># CUDA 11.x, Python 3.8+</span></span><br><span class="line">$ pip install faiss-gpu <span class="comment"># Python 3.6-3.10 (legacy, no longer available after version 1.7.3)</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>torch、cuda 等安装验证及版本查看：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="comment"># 获取 PyTorch 版本信息</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;PyTorch Version: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(torch.version.__version__))  <span class="comment"># 或直接使用 torch.__version__</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;PyTorch CUDA Version: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(torch.version.cuda))  <span class="comment"># 获取 CUDA 版本</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;PyTorch cuDNN Version: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(torch.backends.cudnn.version()))  <span class="comment"># 获取 cuDNN 版本</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>因为在文章代码中会自动下载huggingface上的模型和数据集，会默认存储在~&#x2F;.cache&#x2F;huggingface目录下。如果你担心系统盘不够存储这些数据，你也可以修改huggingface cache的默认根目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> HF_HOME=<span class="string">&quot;/&#123;to_path&#125;/huggingface&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 为了不用每次都执行，你可以直接写入bash配置</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export HF_HOME=&quot;/&#123;to_path&#125;/huggingface&quot;&#x27;</span> &gt;&gt; ~/.bashrc</span><br></pre></td></tr></table></figure>
+
+<p>另外，国内访问huggingface是受限的（墙），我们可以使用huggingface 国内镜像站运行python脚本:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HF_ENDPOINT=https://hf-mirror.com python advanced_rag.py</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tqdm.notebook <span class="keyword">import</span> tqdm</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Optional</span>, <span class="type">List</span>, <span class="type">Tuple</span></span><br><span class="line"><span class="keyword">from</span> datasets <span class="keyword">import</span> Dataset</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line">pd.set_option(<span class="string">&quot;display.max_colwidth&quot;</span>, <span class="literal">None</span>) <span class="comment"># This will be helpful when visualizing retriever outputs </span></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="知识库加载"><a href="#知识库加载" class="headerlink" title="知识库加载"></a>知识库加载</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> datasets</span><br><span class="line">ds = datasets.load_dataset(<span class="string">&quot;m-ric/huggingface_doc&quot;</span>, split=<span class="string">&quot;train&quot;</span>)</span><br><span class="line"><span class="keyword">from</span> langchain.docstore.document <span class="keyword">import</span> Document <span class="keyword">as</span> LangchainDocument</span><br><span class="line">RAW_KNOWLEDGE_BASE = [</span><br><span class="line">        LangchainDocument(page_content=doc[<span class="string">&quot;text&quot;</span>], metadata=&#123;<span class="string">&quot;source&quot;</span>: doc[<span class="string">&quot;source&quot;</span>]&#125;) <span class="keyword">for</span> doc <span class="keyword">in</span> tqdm(ds)</span><br><span class="line">    ]</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="1-Retriever-embeddings-🗂️"><a href="#1-Retriever-embeddings-🗂️" class="headerlink" title="1. Retriever - embeddings 🗂️"></a>1. Retriever - embeddings 🗂️</h1><p><strong>retriever</strong>像一个内置的搜索引擎：接收用户的查询，返回知识库中的一些相关片段。这些片段会输入到Reader Model（如deepseek）中，来帮助它生成答案。因此，现在我们的目标就是，基于用户的问题，从我们的知识库中找到最相关的片段来回答这个问题。这是一个宽泛的目标，它引申出了一堆问题。比如我们应该检索多少个片段？这个关于片段数量的参数就被命名为 <code>top_k</code> 。再比如，每个片段应该有多长？这个片段长度的参数就被称为 <code>chunk size</code> 。这些问题没有唯一的适合所有情况的答案，但有一些相关知识我们可以了解下：</p>
+<ul>
+<li><p>🔀  不同的片段可以有不同的<code>chunk size</code> 。</p>
+</li>
+<li><p>由于检索内容中总会有一些噪音，增加 <code>top_k</code> 的值会增加在检索到的片段中获得相关内容的机会。类似射箭🎯， 射出更多的箭会增加你击中目标的概率。</p>
+</li>
+<li><p>同时，检索到的文档的总长度不应太长：比如，对于目前大多数的模型，16k的token数量可能会让模型因为“<a target="_blank" rel="noopener" href="https://hf-mirror.com/papers/2307.03172">Lost in the middle phenomemon</a>”而淹没在信息中。所以，只给模型提供最相关的见解，而不是一大堆内容！</p>
+</li>
+</ul>
+<blockquote>
+<p>在这篇文章中，我们使用 Langchain 库，因为它提供了大量的向量数据库选项，并允许我们在处理过程中保持文档的元数据。</p>
+</blockquote>
+<h2 id="1-1-将文档拆分为chunks"><a href="#1-1-将文档拆分为chunks" class="headerlink" title="1.1 将文档拆分为chunks"></a>1.1 将文档拆分为chunks</h2><p>在这一部分，我们将知识库中的文档拆分为更小的chunks，chat LLM 会基于这些chunks进行回答。我们的目标是得到一组语义相关的片段。因此，它们的大小需要适应具体的主题或者说是中心思想：太小的话会截断中心思想，太大可能就会稀释中心思想，被其他不相关内容干扰。</p>
+<blockquote>
+<p>💡 现在有许多拆分文本内容的方案，比如：按词拆分、按句子边界拆分、递归拆分（以树状方式处理文档以保留结构信息）……要了解更多关于文本拆分的内容，可以参考<a target="_blank" rel="noopener" href="https://github.com/FullStackRetrieval-com/RetrievalTutorials/blob/main/tutorials/LevelsOfTextSplitting/5_Levels_Of_Text_Splitting.ipynb">这篇文档</a>。</p>
+</blockquote>
+<p>递归分块通过使用一组按重要性排序的分隔符，将文本逐步分解为更小的部分。如果第一次拆分没有给出正确大小的块，它就会在新的块上使用不同的分隔符来重复这个步骤。比如，我们可以使用这样的分隔符列表 <code>[&quot;\n\n&quot;, &quot;\n&quot;, &quot;.&quot;, &quot;&quot;]</code> ：</p>
+<p>这种方法很好的保留了文档的整体结构，但代价是块大小会有轻微的变化。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://huggingface.co/spaces/A-Roucher/chunk_visualizer">这里</a>可以让你看到不同的拆分选项会如何影响你得到的块。</p>
+</blockquote>
+<p>🔬 让我们先用一个任意大小的块来做一个实验，看看拆分具体是怎么工作的。我们直接使用 Langchain 的递归拆分类 <code>RecursiveCharacterTextSplitter</code> 。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"></span><br><span class="line"><span class="comment"># We use a hierarchical list of separators specifically tailored for splitting Markdown documents</span></span><br><span class="line"><span class="comment"># This list is taken from LangChain&#x27;s MarkdownTextSplitter class</span></span><br><span class="line">MARKDOWN_SEPARATORS = [</span><br><span class="line">    <span class="string">&quot;\n#&#123;1,6&#125; &quot;</span>,</span><br><span class="line">    <span class="string">&quot;```\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot;\n\\*\\*\\*+\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot;\n---+\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot;\n___+\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot;\n\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot;\n&quot;</span>,</span><br><span class="line">    <span class="string">&quot; &quot;</span>,</span><br><span class="line">    <span class="string">&quot;&quot;</span>,</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">text_splitter = RecursiveCharacterTextSplitter(</span><br><span class="line">    chunk_size=<span class="number">1000</span>,  <span class="comment"># The maximum number of characters in a chunk: we selected this value arbitrarily</span></span><br><span class="line">    chunk_overlap=<span class="number">100</span>,  <span class="comment"># The number of characters to overlap between chunks</span></span><br><span class="line">    add_start_index=<span class="literal">True</span>,  <span class="comment"># If `True`, includes chunk&#x27;s start index in metadata</span></span><br><span class="line">    strip_whitespace=<span class="literal">True</span>,  <span class="comment"># If `True`, strips whitespace from the start and end of every document</span></span><br><span class="line">    separators=MARKDOWN_SEPARATORS,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">docs_processed = []</span><br><span class="line"><span class="keyword">for</span> doc <span class="keyword">in</span> RAW_KNOWLEDGE_BASE:</span><br><span class="line">    docs_processed += text_splitter.split_documents([doc])</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>其中，参数 <code>chunk_size</code> 控制单个块的长度：这个长度默认是按块中的字符数来计算的。</p>
+</li>
+<li><p>参数 <code>chunk_overlap</code> 是为了允许相邻的块之间有一些重叠，这能够减少一个主题可能在两个相邻块的分割中被切成两半的概率。我们把它设置为块大小的 1&#x2F;10，当然你也可以自己尝试其他不同的值！</p>
+</li>
+</ul>
+<p>我们利用以下代码看看chunk的长度分布：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">lengths = [<span class="built_in">len</span>(doc.page_content) <span class="keyword">for</span> doc <span class="keyword">in</span> tqdm(docs_processed)]</span><br><span class="line"></span><br><span class="line"><span class="comment"># Plot the distribution of document lengths, counted as the number of chars</span></span><br><span class="line">fig = pd.Series(lengths).hist()</span><br><span class="line">plt.title(<span class="string">&quot;Distribution of document lengths in the knowledge base (in count of chars)&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>💡如果你使用了远程设备不支持直接使用 <code>plt.show()</code> 可视化，可以换成用如下代码直接保存成图片。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">plt.savefig(<span class="string">&quot;chunk_sizes_char.png&quot;</span>, dpi=<span class="number">300</span>, bbox_inches=<span class="string">&quot;tight&quot;</span>)</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>可视化结果如下，我们可以看到最大的块的字符长度不会超过1000，这和我们预先设置的参数一致。</p>
+<p><img src="/2025/05/21/ml/llm/rag1/chunk_sizes_char.png"></p>
+<h2 id="1-2-词嵌入"><a href="#1-2-词嵌入" class="headerlink" title="1.2 词嵌入"></a>1.2 词嵌入</h2><p>接下来，我们需要使用词嵌入模型来对分块进行向量化。在使用词嵌入模型时，我们需要知道模型能接受的最大序列长度<code>max_seq_length</code>（按照token数统计）。需要确保分块的token数低于这个值，因为超过<code>max_seq_length</code>的块在处理之前都会被截断，从而失去相关性。这里我们使用的嵌入模型是<code>thenlper/gte-small</code>， 下面代码先打印了该模型支持的最大长度，然后再对分块结果进行token数量的分布统计。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer</span><br><span class="line"></span><br><span class="line"><span class="comment"># To get the value of the max sequence_length, we will query the underlying `SentenceTransformer` object used in the RecursiveCharacterTextSplitter</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;Model&#x27;s maximum sequence length: <span class="subst">&#123;SentenceTransformer(<span class="string">&#x27;thenlper/gte-small&#x27;</span>).max_seq_length&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(<span class="string">&quot;thenlper/gte-small&quot;</span>)</span><br><span class="line">lengths = [<span class="built_in">len</span>(tokenizer.encode(doc.page_content)) <span class="keyword">for</span> doc <span class="keyword">in</span> tqdm(docs_processed)]</span><br><span class="line"></span><br><span class="line"><span class="comment"># Plot the distribution of document lengths, counted as the number of tokens</span></span><br><span class="line">fig = pd.Series(lengths).hist()</span><br><span class="line">plt.title(<span class="string">&quot;Distribution of document lengths in the knowledge base (in count of tokens)&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+<p>上面代码会先输出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Model<span class="string">&#x27;s maximum sequence length: 512</span></span><br></pre></td></tr></table></figure>
+
+<p>表示<code>thenlper/gte-small</code> 支持的最大块长度是 512</p>
+<p>可视化结果如下：</p>
+<p><img src="/2025/05/21/ml/llm/rag1/%E6%88%AA%E5%B1%8F2025-05-21%2015.22.24.png"></p>
+<p>👀 可以看到，某些分块的token数量超过了 512 的限制，这样就会导致分块中的一部分内容会因截断而丢失！</p>
+<ul>
+<li><p>既然是基于token数来统计，那我们就应该将 <code>RecursiveCharacterTextSplitter</code> 类更改为以token数量而不是字符数量来计算长度。</p>
+</li>
+<li><p>然后我们可以选择一个特定的块大小，这里我们选择一个低于 512 的阈值：</p>
+<ul>
+<li><p>较小的文档可以使分块更专注于特定的主题。</p>
+</li>
+<li><p>但过小的块又会将完整的句子一分为二，从而再次失去意义，所以这也需要我们根据实际情况进行权衡。</p>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer</span><br><span class="line"></span><br><span class="line">EMBEDDING_MODEL_NAME = <span class="string">&quot;thenlper/gte-small&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">split_documents</span>(<span class="params"></span></span><br><span class="line"><span class="params">    chunk_size: <span class="built_in">int</span>,</span></span><br><span class="line"><span class="params">    knowledge_base: <span class="type">List</span>[LangchainDocument],</span></span><br><span class="line"><span class="params">    tokenizer_name: <span class="type">Optional</span>[<span class="built_in">str</span>] = EMBEDDING_MODEL_NAME,</span></span><br><span class="line"><span class="params"></span>) -&gt; <span class="type">List</span>[LangchainDocument]:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Split documents into chunks of maximum size `chunk_size` tokens and return a list of documents.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(</span><br><span class="line">        AutoTokenizer.from_pretrained(tokenizer_name),</span><br><span class="line">        chunk_size=chunk_size,</span><br><span class="line">        chunk_overlap=<span class="built_in">int</span>(chunk_size / <span class="number">10</span>),</span><br><span class="line">        add_start_index=<span class="literal">True</span>, <span class="comment"># 是否在每个分块的 metadata 中添加该分块在原始文档中的起始字符索引</span></span><br><span class="line">        strip_whitespace=<span class="literal">True</span>, <span class="comment"># 是否去除每个分块开头和结尾的空白字符（如空格、换行等）</span></span><br><span class="line">        separators=MARKDOWN_SEPARATORS,</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    docs_processed = []</span><br><span class="line">    <span class="keyword">for</span> doc <span class="keyword">in</span> knowledge_base:</span><br><span class="line">        docs_processed += text_splitter.split_documents([doc])</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Remove duplicates</span></span><br><span class="line">    unique_texts = &#123;&#125;</span><br><span class="line">    docs_processed_unique = []</span><br><span class="line">    <span class="keyword">for</span> doc <span class="keyword">in</span> docs_processed:</span><br><span class="line">        <span class="keyword">if</span> doc.page_content <span class="keyword">not</span> <span class="keyword">in</span> unique_texts:</span><br><span class="line">            unique_texts[doc.page_content] = <span class="literal">True</span></span><br><span class="line">            docs_processed_unique.append(doc)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> docs_processed_unique</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">docs_processed = split_documents(</span><br><span class="line">    <span class="number">512</span>,  <span class="comment"># We choose a chunk size adapted to our model</span></span><br><span class="line">    RAW_KNOWLEDGE_BASE,</span><br><span class="line">    tokenizer_name=EMBEDDING_MODEL_NAME,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Let&#x27;s visualize the chunk sizes we would have in tokens from a common model</span></span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL_NAME)</span><br><span class="line">lengths = [<span class="built_in">len</span>(tokenizer.encode(doc.page_content)) <span class="keyword">for</span> doc <span class="keyword">in</span> tqdm(docs_processed)]</span><br><span class="line">fig = pd.Series(lengths).hist()</span><br><span class="line">plt.title(<span class="string">&quot;Distribution of document lengths in the knowledge base (in count of tokens)&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+<p>可视化结果如下图，可以看到，现在块长度的分布看起来比之前好很多了！</p>
+<p><img src="/2025/05/21/ml/llm/rag1/chunk_sizes2.png"></p>
+<h2 id="1-3-构建向量数据库"><a href="#1-3-构建向量数据库" class="headerlink" title="1.3 构建向量数据库"></a>1.3 构建向量数据库</h2><p>接下来，我们需要把所有块的词嵌入结果存到向量数据库中，当用户输入问题时，问题本身也会被先前使用的相同词嵌入模型进行词嵌入（向量化），并通过相似性搜索返回向量数据库中最接近的文档。如果你想了解更多词嵌入的信息，可以参考这篇<a target="_blank" rel="noopener" href="https://osanseviero.github.io/hackerllama/blog/posts/sentence_embeddings/">指南</a>。这里的难点在于，给定一个查询向量，快速找到该向量在向量数据库中的最近邻。为此，我们需要确定两个东西：一种距离度量方式和一种搜索算法，以便在数千条记录的数据库中快速找到最近邻。</p>
+<h3 id="Nearest-Neighbor-search-algorithm-（最近邻搜索算法）"><a href="#Nearest-Neighbor-search-algorithm-（最近邻搜索算法）" class="headerlink" title="Nearest Neighbor search algorithm （最近邻搜索算法）"></a>Nearest Neighbor search algorithm （最近邻搜索算法）</h3><p>最近邻搜索算法有很多，这里我们直接选择 Facebook 的 FAISS (Facebook AI Similarity Search)。它既能用于高效相似性搜索，又能作为密集向量存储库。</p>
+<p>FAISS能够：</p>
+<ul>
+<li><p>将文档、图像等数据转换为向量后进行高效的相似度搜索</p>
+</li>
+<li><p>支持多种距离计算方式(如代码中使用的余弦相似度<code>DistanceStrategy.COSINE</code>)</p>
+</li>
+<li><p>处理大规模向量数据集</p>
+</li>
+</ul>
+<p>FAISS特点：</p>
+<ul>
+<li><p>支持 CPU 和 GPU 加速</p>
+</li>
+<li><p>提供多种索引类型以平衡速度和准确性</p>
+</li>
+<li><p>可以本地保存和加载索引(如代码中的<code>save_local</code>和<code>load_local</code>)</p>
+</li>
+<li><p>内存效率高,适合处理大规模数据</p>
+</li>
+</ul>
+<p>FAISS优势：</p>
+<ul>
+<li><p>搜索速度快</p>
+</li>
+<li><p>资源消耗相对较低</p>
+</li>
+<li><p>集成简单,特别是与 LangChain 等框架配合使用</p>
+</li>
+<li><p>支持增量更新索引</p>
+</li>
+</ul>
+<h3 id="Distances-（距离）"><a href="#Distances-（距离）" class="headerlink" title="Distances （距离）"></a>Distances （距离）</h3><p>关于向量间的距离，我们先来回忆三个数学概念。</p>
+<h4 id="点积（Dot-Product）："><a href="#点积（Dot-Product）：" class="headerlink" title="点积（Dot Product）："></a><strong>点积（Dot Product）：</strong></h4><p>对于两个 $$n$$维向量 $$\mathbf{A} &#x3D; [a_1, a_2, \dots, a_n]$$和 $$\mathbf{B} &#x3D; [b_1, b_2, \dots, b_n]$$，它们的点积定义为：</p>
+<p>$$\mathbf{A} \cdot \mathbf{B} &#x3D; \sum_{i&#x3D;1}^{n} a_i \cdot b_i &#x3D; a_1 b_1 + a_2 b_2 + \cdots + a_n b_n$$</p>
+<p><strong>几何意义</strong>：点积反映两个向量的方向关系与模长的乘积，即：</p>
+<p>$$\mathbf{A} \cdot \mathbf{B} &#x3D; |\mathbf{A}| \cdot |\mathbf{B}| \cdot \cos\theta$$</p>
+<p>其中 $$\theta$$是两向量之间的夹角，$$|\mathbf{A}|$$和 $$|\mathbf{B}|$$分别为向量的模长（L2范数）。</p>
+<h4 id="余弦相似度（Cosine-Similarity）："><a href="#余弦相似度（Cosine-Similarity）：" class="headerlink" title="余弦相似度（Cosine Similarity）："></a><strong>余弦相似度（Cosine Similarity）：</strong></h4><p>余弦相似度通过归一化点积来消除向量长度的影响，其定义为：</p>
+<p>$$\text{Cosine Similarity} &#x3D; \cos\theta &#x3D; \frac{\mathbf{A} \cdot \mathbf{B}}{|\mathbf{A}| \cdot |\mathbf{B}|}$$</p>
+<p>其中：</p>
+<ul>
+<li><p>分子为两向量的点积；</p>
+</li>
+<li><p>分母为两向量模长的乘积（即归一化因子）。</p>
+</li>
+</ul>
+<p><strong>几何意义</strong>：仅关注向量方向的一致性，取值范围为 $$[-1, 1]$$：</p>
+<ul>
+<li><p><strong>1</strong>：方向完全相同；</p>
+</li>
+<li><p><strong>0</strong>：正交（无相关性）；</p>
+</li>
+<li><p><strong>-1</strong>：方向完全相反。</p>
+</li>
+</ul>
+<h4 id="欧式距离（Euclidean-Distance）公式"><a href="#欧式距离（Euclidean-Distance）公式" class="headerlink" title="欧式距离（Euclidean Distance）公式"></a><strong>欧式距离（Euclidean Distance）公式</strong></h4><p>用于衡量两个向量在空间中的绝对距离，是最直观的几何距离度量方式。 </p>
+<p><strong>数学定义</strong></p>
+<p>对于 $$n$$维向量 $$\mathbf{A} &#x3D; [a_1, a_2, \dots, a_n]$$和 $$\mathbf{B} &#x3D; [b_1, b_2, \dots, b_n]$$，其欧式距离公式为： </p>
+<p>$$\text{Euclidean Distance}&#x3D;\sqrt{\sum_{i&#x3D;1}^{n}(a_i-b_i)^2}$$</p>
+<p>即：  $$\sqrt{(a_1-b_1)^2+(a_2-b_2)^2+\cdots+(a_n-b_n)^2}$$</p>
+<p><strong>几何意义</strong></p>
+<p>在几何空间中，欧式距离表示两点之间的直线距离。例如： </p>
+<ul>
+<li><p><strong>二维空间</strong>中，点 $$(x_1, y_1)$$和 $$(x_2, y_2)$$的欧式距离为: $$\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$</p>
+</li>
+<li><p><strong>三维空间</strong>中，点 $$(x_1, y_1, z_1)$$和 $$(x_2, y_2, z_2)$$的距离为：$$\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}$$</p>
+</li>
+</ul>
+<p><strong>公式关系</strong>： </p>
+<p>$$\text{Euclidean Distance}^2&#x3D;|\mathbf{A}|^2+|\mathbf{B}|^2-2|\mathbf{A}||\mathbf{B}|\cos\theta$$（其中 $$\cos\theta$$为余弦相似度）</p>
+<p>关于距离，还可以参考这篇<a target="_blank" rel="noopener" href="https://osanseviero.github.io/hackerllama/blog/posts/sentence_embeddings/#distance-between-embeddings">指南</a>。关键概念如下：</p>
+<ul>
+<li><p>余弦相似度通过计算两个向量夹角的余弦来得到这两个向量的相似性，这种方法允许我们只比较向量方向，而不用考虑它们的大小。使用这种方法需要对所有向量进行归一化，来把它们缩放为单位向量，可以理解成归一化后的点积。</p>
+</li>
+<li><p>点积考虑了向量的长度，但有时会产生不好的效果，有时增加向量的长度可能会让它和所有其他向量变得相似。</p>
+</li>
+<li><p><strong>而</strong>欧几里得距离是向量末端之间的距离。</p>
+</li>
+</ul>
+<p>我们这里使用的嵌入模型在余弦相似度下表现良好，因此我们就选择这个距离，并在我们的嵌入模型和 FAISS 索引的 <code>distance_strategy</code> 参数中进行设置。使用余弦相似度时，记得对嵌入向量进行归一化！</p>
+<p>🚨👇 以下代码就是通过嵌入模型将所有文本分块向量化之后存储到FAISS向量数据库中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">FAISS_INDEX_PATH = <span class="string">&quot;faiss_index&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> FAISS</span><br><span class="line"><span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores.utils <span class="keyword">import</span> DistanceStrategy</span><br><span class="line"></span><br><span class="line">embedding_model = HuggingFaceEmbeddings(</span><br><span class="line">    model_name=EMBEDDING_MODEL_NAME,</span><br><span class="line">    multi_process=<span class="literal">True</span>,</span><br><span class="line">    model_kwargs=&#123;<span class="string">&quot;device&quot;</span>: <span class="string">&quot;cpu&quot;</span>&#125;,</span><br><span class="line">    encode_kwargs=&#123;<span class="string">&quot;normalize_embeddings&quot;</span>: <span class="literal">True</span>&#125;,  <span class="comment"># Set `True` for cosine similarity</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> os.path.exists(FAISS_INDEX_PATH):</span><br><span class="line">    KNOWLEDGE_VECTOR_DATABASE = FAISS.load_local(FAISS_INDEX_PATH, </span><br><span class="line">                                                 embedding_model, </span><br><span class="line">                                                 allow_dangerous_deserialization=<span class="literal">True</span>  <span class="comment"># 明确允许反序列化</span></span><br><span class="line">                                                 )</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;FAISS 索引已存在，已从 <span class="subst">&#123;FAISS_INDEX_PATH&#125;</span> 加载。&quot;</span>)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    KNOWLEDGE_VECTOR_DATABASE = FAISS.from_documents(</span><br><span class="line">        docs_processed, embedding_model, distance_strategy=DistanceStrategy.COSINE</span><br><span class="line">    )</span><br><span class="line">    KNOWLEDGE_VECTOR_DATABASE.save_local(FAISS_INDEX_PATH)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;FAISS 索引不存在，已创建并保存到 <span class="subst">&#123;FAISS_INDEX_PATH&#125;</span>。&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>接下来，我们就要尝试在向量数据库中搜索我们指定的内容了。首先我们对查询内容也进行嵌入操作，如下代码。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Embed a user query in the same space</span></span><br><span class="line">user_query = <span class="string">&quot;How to create a pipeline object?&quot;</span></span><br><span class="line">query_vector = embedding_model.embed_query(user_query)</span><br></pre></td></tr></table></figure>
+
+<p>为了方便对比文本块向量之间的距离，我们会先将他们可视化出来。 为了方便观察，需要在2维坐标系中可视化结果，我们使用 PaCMAP把块向量的维度从 384 维降到 2 维。下面是对向量数据库中所有向量数据以及查询向量数据的可视化代码 。</p>
+<blockquote>
+<p>💡这里我们选择了 PaCMAP 来降维而不是其他技术，比如 t-SNE 或 UMAP，<a target="_blank" rel="noopener" href="https://www.nature.com/articles/s42003-022-03628-x#Abs1">因为PaCMAP更加高效，并且能够保留局部和全局结构</a>。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pacmap</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> plotly.express <span class="keyword">as</span> px</span><br><span class="line"></span><br><span class="line">embedding_projector = pacmap.PaCMAP(n_components=<span class="number">2</span>, n_neighbors=<span class="literal">None</span>, MN_ratio=<span class="number">0.5</span>, FP_ratio=<span class="number">2.0</span>, random_state=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">embeddings_2d = [</span><br><span class="line">    <span class="built_in">list</span>(KNOWLEDGE_VECTOR_DATABASE.index.reconstruct_n(idx, <span class="number">1</span>)[<span class="number">0</span>]) <span class="keyword">for</span> idx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(docs_processed))</span><br><span class="line">] + [query_vector]</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fit the data (the index of transformed data corresponds to the index of the original data)</span></span><br><span class="line">documents_projected = embedding_projector.fit_transform(np.array(embeddings_2d), init=<span class="string">&quot;pca&quot;</span>)</span><br><span class="line"></span><br><span class="line">df = pd.DataFrame.from_dict(</span><br><span class="line">    [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;x&quot;</span>: documents_projected[i, <span class="number">0</span>],</span><br><span class="line">            <span class="string">&quot;y&quot;</span>: documents_projected[i, <span class="number">1</span>],</span><br><span class="line">            <span class="string">&quot;source&quot;</span>: docs_processed[i].metadata[<span class="string">&quot;source&quot;</span>].split(<span class="string">&quot;/&quot;</span>)[<span class="number">1</span>],</span><br><span class="line">            <span class="string">&quot;extract&quot;</span>: docs_processed[i].page_content[:<span class="number">100</span>] + <span class="string">&quot;...&quot;</span>,</span><br><span class="line">            <span class="string">&quot;symbol&quot;</span>: <span class="string">&quot;circle&quot;</span>,</span><br><span class="line">            <span class="string">&quot;size_col&quot;</span>: <span class="number">4</span>,</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(docs_processed))</span><br><span class="line">    ]</span><br><span class="line">    + [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;x&quot;</span>: documents_projected[-<span class="number">1</span>, <span class="number">0</span>],</span><br><span class="line">            <span class="string">&quot;y&quot;</span>: documents_projected[-<span class="number">1</span>, <span class="number">1</span>],</span><br><span class="line">            <span class="string">&quot;source&quot;</span>: <span class="string">&quot;User query&quot;</span>,</span><br><span class="line">            <span class="string">&quot;extract&quot;</span>: user_query,</span><br><span class="line">            <span class="string">&quot;size_col&quot;</span>: <span class="number">100</span>,</span><br><span class="line">            <span class="string">&quot;symbol&quot;</span>: <span class="string">&quot;star&quot;</span>,</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Visualize the embedding</span></span><br><span class="line">fig = px.scatter(</span><br><span class="line">    df,</span><br><span class="line">    x=<span class="string">&quot;x&quot;</span>,</span><br><span class="line">    y=<span class="string">&quot;y&quot;</span>,</span><br><span class="line">    color=<span class="string">&quot;source&quot;</span>,</span><br><span class="line">    hover_data=<span class="string">&quot;extract&quot;</span>,</span><br><span class="line">    size=<span class="string">&quot;size_col&quot;</span>,</span><br><span class="line">    symbol=<span class="string">&quot;symbol&quot;</span>,</span><br><span class="line">    color_discrete_map=&#123;<span class="string">&quot;User query&quot;</span>: <span class="string">&quot;black&quot;</span>&#125;,</span><br><span class="line">    width=<span class="number">1000</span>,</span><br><span class="line">    height=<span class="number">700</span>,</span><br><span class="line">)</span><br><span class="line">fig.update_traces(</span><br><span class="line">    marker=<span class="built_in">dict</span>(opacity=<span class="number">1</span>, line=<span class="built_in">dict</span>(width=<span class="number">0</span>, color=<span class="string">&quot;DarkSlateGrey&quot;</span>)),</span><br><span class="line">    selector=<span class="built_in">dict</span>(mode=<span class="string">&quot;markers&quot;</span>),</span><br><span class="line">)</span><br><span class="line">fig.update_layout(</span><br><span class="line">    legend_title_text=<span class="string">&quot;&lt;b&gt;Chunk source&lt;/b&gt;&quot;</span>,</span><br><span class="line">    title=<span class="string">&quot;&lt;b&gt;2D Projection of Chunk Embeddings via PaCMAP&lt;/b&gt;&quot;</span>,</span><br><span class="line">)</span><br><span class="line">fig.show()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果需要保存成图片 ，需要先安装kaleido</span></span><br><span class="line"><span class="comment"># pip install --upgrade kaleido</span></span><br><span class="line"><span class="comment"># fig.write_image(&quot;embedding_projection.png&quot;)  # 保存为图片</span></span><br></pre></td></tr></table></figure>
+
+<p>可视化结果如下：</p>
+<p><img src="/2025/05/21/ml/llm/rag1/embedding_projection.png"></p>
+<p>从图中你可以看到向量数据库中的所有向量数据（按照二维点的坐标形式呈现），点的颜色表示文本分块的来源，即相同颜色就表示来源相同的文本分块向量。由于向量能够表达文本分块chunk的含义，因此它们在含义上的接近程度可以反映在对应向量的接近程度上（相同颜色的点聚集在一起）。另外，用户输入的查询向量也显示在图上（黑色方块）。</p>
+<p>如果我们想要找到 <code>k</code> 个和查询内容含义接近的文档，那我们就可以直接选择 <code>k</code> 个与查询向量最接近的向量。在LangChain的向量数据库中，这个搜索操作可以通过方法<code>vector_database.similarity_search(query)</code> 来实现。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;\nStarting retrieval for <span class="subst">&#123;user_query=&#125;</span>...&quot;</span>)</span><br><span class="line">retrieved_docs = KNOWLEDGE_VECTOR_DATABASE.similarity_search(query=user_query, k=<span class="number">5</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;\n==================================Top document==================================&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(retrieved_docs[<span class="number">0</span>].page_content)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================Metadata==================================&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(retrieved_docs[<span class="number">0</span>].metadata)</span><br></pre></td></tr></table></figure>
+
+<p>输出内容如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Starting retrieval <span class="keyword">for</span> user_query=<span class="string">&#x27;How to create a pipeline object?&#x27;</span>...</span><br><span class="line"></span><br><span class="line">==================================Top document==================================</span><br><span class="line">```</span><br><span class="line">&lt;/tf&gt;</span><br><span class="line">&lt;/frameworkcontent&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">## Pipeline</span></span><br><span class="line"></span><br><span class="line">&lt;Youtube <span class="built_in">id</span>=<span class="string">&quot;tiZFewofSLM&quot;</span>/&gt;</span><br><span class="line"></span><br><span class="line">The [`pipeline`] is the easiest and fastest way to use a pretrained model <span class="keyword">for</span> inference. You can use the [`pipeline`] out-of-the-box <span class="keyword">for</span> many tasks across different modalities, some of <span class="built_in">which</span> are shown <span class="keyword">in</span> the table below:</span><br><span class="line"></span><br><span class="line">&lt;Tip&gt;</span><br><span class="line"></span><br><span class="line">For a complete list of available tasks, check out the [pipeline API reference](./main_classes/pipelines).</span><br><span class="line"></span><br><span class="line">&lt;/Tip&gt;</span><br><span class="line">==================================Metadata==================================</span><br><span class="line">&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;huggingface/transformers/blob/main/docs/source/en/quicktour.md&#x27;</span>, <span class="string">&#x27;start_index&#x27;</span>: 1585&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="1-4-重排序-Reranking"><a href="#1-4-重排序-Reranking" class="headerlink" title="1.4 重排序(Reranking)"></a>1.4 重排序(Reranking)</h2><p>聪明的你可能会想到，一个更好的检索策略应该是先检索出尽可能多的结果内容，然后再利用一个强大的检索模型对结果进行重排序，最后再保留排序后 <code>top_k</code> 的内容。</p>
+<p>For this, <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2112.01488">Colbertv2 </a>is a great choice: instead of a bi-encoder like our classical embedding models, it is a cross-encoder that computes more fine-grained interactions between the query tokens and each document’s tokens.<br>为了实现这一点，我们选择了<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2112.01488">Colbertv2</a>。</p>
+<h3 id="Colbertv2"><a href="#Colbertv2" class="headerlink" title="Colbertv2"></a>Colbertv2</h3><p>ColBERT v2.0 是一个高效的神经信息检索模型，它是 ColBERT 的改进版本。主要特点：</p>
+<ol>
+<li><p><strong>延迟编码技术</strong></p>
+<ul>
+<li><p>使用 BERT 风格的编码器对查询和文档进行编码</p>
+</li>
+<li><p>将查询和文档的交互推迟到搜索时进行</p>
+</li>
+<li><p>支持更细粒度的相关性匹配</p>
+</li>
+</ul>
+</li>
+<li><p><strong>性能优势</strong></p>
+<ul>
+<li><p>相比传统的检索模型具有更高的准确性</p>
+</li>
+<li><p>支持快速检索和重排序</p>
+</li>
+<li><p>在处理长文本时表现出色</p>
+</li>
+</ul>
+</li>
+<li><p><strong>应用场景</strong></p>
+<ul>
+<li><p>文档检索</p>
+</li>
+<li><p>问答系统</p>
+</li>
+<li><p>信息检索</p>
+</li>
+<li><p>重排序任务</p>
+</li>
+</ul>
+</li>
+</ol>
+<p>ColBERT v2.0 关键的优势在于它使用了交叉编码器，而不是通常嵌入模型的双编码器。</p>
+<h3 id="Bi-encoder-vs-Cross-encoder"><a href="#Bi-encoder-vs-Cross-encoder" class="headerlink" title="Bi-encoder vs Cross-encoder"></a>Bi-encoder vs Cross-encoder</h3><p>Bi-encoder（双编码器）</p>
+<ul>
+<li><p><strong>工作方式</strong>：</p>
+<ul>
+<li><p>分别对查询和文档进行独立编码</p>
+</li>
+<li><p>生成固定维度的向量表示</p>
+</li>
+<li><p>通过向量相似度（如余弦相似度）计算匹配程度</p>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Bi-encoder 示例</span></span><br><span class="line">query_vector = encoder(query)           <span class="comment"># 查询编码</span></span><br><span class="line">document_vector = encoder(document)     <span class="comment"># 文档编码</span></span><br><span class="line">similarity = cosine_similarity(query_vector, document_vector)</span><br></pre></td></tr></table></figure>
+
+<p>Cross-encoder（交叉编码器）</p>
+<ul>
+<li><p><strong>工作方式</strong>：</p>
+<ul>
+<li><p>同时处理查询和文档</p>
+</li>
+<li><p>直接对查询-文档对进行交互建模</p>
+</li>
+<li><p>计算更细粒度的 token 级别相关性</p>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Cross-encoder 示例</span></span><br><span class="line">relevance_score = cross_encoder([query, document])  <span class="comment"># 直接对查询和文档进行交互编码</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>主要优势对比</strong></p>
+<ol>
+<li><p><strong>计算精度</strong>：</p>
+<ul>
+<li><p>Cross-encoder 能捕获更细粒度的语义关系</p>
+</li>
+<li><p>可以识别更复杂的查询-文档匹配模式</p>
+</li>
+</ul>
+</li>
+<li><p><strong>计算效率</strong>：</p>
+<ul>
+<li><p>Bi-encoder 更高效，因为可以预计算文档向量</p>
+</li>
+<li><p>Cross-encoder 需要实时计算，但精度更高</p>
+</li>
+</ul>
+</li>
+</ol>
+<p>我们可以直接在代码里使用 <code>ragatouille</code> 库。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">relevant_docs = knowledge_index.similarity_search(query=user_query, k=<span class="number">30</span>)</span><br><span class="line">relevant_docs = [doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> relevant_docs]  <span class="comment"># Keep only the text</span></span><br><span class="line"><span class="keyword">from</span> ragatouille <span class="keyword">import</span> RAGPretrainedModel</span><br><span class="line"></span><br><span class="line">RERANKER = RAGPretrainedModel.from_pretrained(<span class="string">&quot;colbert-ir/colbertv2.0&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;=&gt; Reranking documents...&quot;</span>)</span><br><span class="line">relevant_docs = reranker.rerank(user_query, relevant_docs, k=<span class="number">5</span>)</span><br><span class="line">relevant_docs = [doc[<span class="string">&quot;content&quot;</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> relevant_docs]</span><br><span class="line">relevant_docs = relevant_docs[:<span class="number">5</span>]</span><br></pre></td></tr></table></figure>
+
+<h1 id="2-Reader-LLM-💬"><a href="#2-Reader-LLM-💬" class="headerlink" title="2. Reader - LLM 💬"></a>2. Reader - LLM 💬</h1><p>在这一部分，LLM Reader 会读取上面检索到的内容来形成最终的答案。在这一步中，可以调整的子步骤有很多：</p>
+<ol>
+<li><p>检索到的文档内容被聚合到“上下文（context）”中，有很多处理方式可供选择，比如<em>prompt compression</em>。</p>
+</li>
+<li><p>上下文和用户的查询被聚合在一个prompt里，提交给 LLM 来生成最终的答案。</p>
+</li>
+</ol>
+<h2 id="2-1-Reader-model"><a href="#2-1-Reader-model" class="headerlink" title="2.1. Reader model"></a>2.1. Reader model</h2><p>在选择Reader Model 也就是 LLM 时需要考虑如下几个方面：</p>
+<ul>
+<li>我们提供给Reader Model的prompt 长度受限于模型的<code>max_seq_length</code> 参数，prompt中主要的内容就是Retriever输出的检索结果，前文中的代码我们选择了 5（<code>k=5</code>）个最接近的内容，每个是由 512（<code>chunk_size=512</code>） 个token组成，因此我们预估需要LLM至少支持的上下文长度为 4k。</li>
+</ul>
+<blockquote>
+<p>为什么是4K？ 如果有5个文档，每个512个token，那么仅检索到的上下文就只有2,560个token（5 × 512 &#x3D; 2,560）。4K tokens说明需要考虑除检索文档之外的其他组件：</p>
+<ol>
+<li><p><strong>检索上下文</strong>：2,560 tokens（5 × 512）</p>
+</li>
+<li><p><strong>用户查询&#x2F;问题</strong>：大约50-200 tokens</p>
+</li>
+<li><p><strong>系统提示&#x2F;指令</strong>：可能200-500 tokens</p>
+</li>
+<li><p><strong>格式化&#x2F;分隔符</strong>：最小开销</p>
+</li>
+<li><p><strong>响应生成缓冲区</strong>：500-1000 tokens</p>
+</li>
+</ol>
+<p>所以4K tokens在仅检索文档所需的最小2,560 tokens基础上提供了合理的安全边际。这考虑了完整的提示结构，并确保模型有足够的上下文窗口来进行输入处理和响应生成。</p>
+<p>不过，如果你的检索上下文真的固定在2,560 tokens，而其他组件很少，你可能可以使用更小的上下文窗口（比如3K）。选择4K似乎是一个保守的估计，为提示变化提供了余量，确保可靠运行。</p>
+</blockquote>
+<ul>
+<li>reader model 的选择</li>
+</ul>
+<p>在这个例子中，我们使用了 <a target="_blank" rel="noopener" href="https://hf-mirror.com/HuggingFaceH4/zephyr-7b-beta"><code>HuggingFaceH4/zephyr-7b-beta</code></a> ，一个小巧而强大的模型。现在每周都会有许多模型发布，你可以把这个模型替换为你想要的最新最好的模型。跟踪开源 LLM 的最佳方法是查看 <a target="_blank" rel="noopener" href="https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard">Open-source LLM leaderboard</a>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> pipeline</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig</span><br><span class="line"></span><br><span class="line">READER_MODEL_NAME = <span class="string">&quot;HuggingFaceH4/zephyr-7b-beta&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 为了加快推理速度，我们加载这个模型的量化版本</span></span><br><span class="line">bnb_config = BitsAndBytesConfig(</span><br><span class="line">    load_in_4bit=<span class="literal">True</span>, <span class="comment"># 4bit 量化</span></span><br><span class="line">    bnb_4bit_use_double_quant=<span class="literal">True</span>, <span class="comment"># 双重量化，进一步压缩量化参数</span></span><br><span class="line">    <span class="comment"># NF4：专为神经网络权重分布优化的4位数据类型</span></span><br><span class="line">    <span class="comment"># 相比传统的均匀量化（fp4），NF4能更好地处理权重的正态分布特性</span></span><br><span class="line">    <span class="comment"># 在相同压缩率下提供更好的模型性能</span></span><br><span class="line">    bnb_4bit_quant_type=<span class="string">&quot;nf4&quot;</span>, <span class="comment"># 指定量化类型为NF4（NormalFloat4）</span></span><br><span class="line">    bnb_4bit_compute_dtype=torch.bfloat16,</span><br><span class="line">)</span><br><span class="line">model = AutoModelForCausalLM.from_pretrained(READER_MODEL_NAME, quantization_config=bnb_config)</span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(READER_MODEL_NAME)</span><br><span class="line"></span><br><span class="line">READER_LLM = pipeline(</span><br><span class="line">    model=model,</span><br><span class="line">    tokenizer=tokenizer,</span><br><span class="line">    task=<span class="string">&quot;text-generation&quot;</span>,</span><br><span class="line">    do_sample=<span class="literal">True</span>,</span><br><span class="line">    temperature=<span class="number">0.2</span>,</span><br><span class="line">    repetition_penalty=<span class="number">1.1</span>,</span><br><span class="line">    return_full_text=<span class="literal">False</span>,</span><br><span class="line">    max_new_tokens=<span class="number">500</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># READER_LLM(&quot;What is 4+4? Answer:&quot;)</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-Prompt"><a href="#2-2-Prompt" class="headerlink" title="2.2. Prompt"></a>2.2. Prompt</h2><p>下面是我们提供给 Reader LLM 的 RAG 提示词模板， 在模板中我们指定了上下文<code>&#123;context&#125;</code>和用户问题<code>&#123;question&#125;</code>这两个需要填充的变量。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">prompt_in_chat_format = [</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="string">&quot;role&quot;</span>: <span class="string">&quot;system&quot;</span>,</span><br><span class="line">        <span class="string">&quot;content&quot;</span>: <span class="string">&quot;&quot;&quot;Using the information contained in the context,</span></span><br><span class="line"><span class="string">give a comprehensive answer to the question.</span></span><br><span class="line"><span class="string">Respond only to the question asked, response should be concise and relevant to the question.</span></span><br><span class="line"><span class="string">Provide the number of the source document when relevant.</span></span><br><span class="line"><span class="string">If the answer cannot be deduced from the context, do not give an answer.&quot;&quot;&quot;</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>,</span><br><span class="line">        <span class="string">&quot;content&quot;</span>: <span class="string">&quot;&quot;&quot;Context:</span></span><br><span class="line"><span class="string">&#123;context&#125;</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">Now here is the question you need to answer.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Question: &#123;question&#125;&quot;&quot;&quot;</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">]</span><br><span class="line">RAG_PROMPT_TEMPLATE = tokenizer.apply_chat_template(</span><br><span class="line">    prompt_in_chat_format, tokenize=<span class="literal">False</span>, add_generation_prompt=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"><span class="built_in">print</span>(RAG_PROMPT_TEMPLATE)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;|system|&gt;</span><br><span class="line">Using the information contained <span class="keyword">in</span> the context, </span><br><span class="line">give a comprehensive answer to the question.</span><br><span class="line">Respond only to the question asked, response should be concise and relevant to the question.</span><br><span class="line">Provide the number of the <span class="built_in">source</span> document when relevant.</span><br><span class="line">If the answer cannot be deduced from the context, <span class="keyword">do</span> not give an answer.</span><br><span class="line">&lt;|user|&gt;</span><br><span class="line">Context:</span><br><span class="line">&amp;#123;context&#125;</span><br><span class="line">---</span><br><span class="line">Now here is the question you need to answer.</span><br><span class="line"></span><br><span class="line">Question: &amp;#123;question&#125;</span><br><span class="line">&lt;|assistant|&gt;</span><br></pre></td></tr></table></figure>
+
+<p>我们测试一下这个模型的效果, 我们需要把上面的模板format一下再输入给模型。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">retrieved_docs_text = [doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> retrieved_docs]  <span class="comment"># We only need the text of the documents</span></span><br><span class="line">context = <span class="string">&quot;\nExtracted documents:\n&quot;</span></span><br><span class="line">context += <span class="string">&quot;&quot;</span>.join([<span class="string">f&quot;Document <span class="subst">&#123;<span class="built_in">str</span>(i)&#125;</span>:::\n&quot;</span> + doc <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(retrieved_docs_text)])</span><br><span class="line"></span><br><span class="line">final_prompt = RAG_PROMPT_TEMPLATE.<span class="built_in">format</span>(question=<span class="string">&quot;How to create a pipeline object?&quot;</span>, context=context)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Redact an answer</span></span><br><span class="line">answer = READER_LLM(final_prompt)[<span class="number">0</span>][<span class="string">&quot;generated_text&quot;</span>]</span><br><span class="line"><span class="built_in">print</span>(answer)</span><br></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2><h1 id="3-内容整合"><a href="#3-内容整合" class="headerlink" title="3. 内容整合"></a>3. 内容整合</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> Pipeline</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">answer_with_rag</span>(<span class="params"></span></span><br><span class="line"><span class="params">    question: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">    llm: Pipeline,</span></span><br><span class="line"><span class="params">    knowledge_index: FAISS,</span></span><br><span class="line"><span class="params">    reranker: <span class="type">Optional</span>[RAGPretrainedModel] = <span class="literal">None</span>,</span></span><br><span class="line"><span class="params">    num_retrieved_docs: <span class="built_in">int</span> = <span class="number">30</span>,</span></span><br><span class="line"><span class="params">    num_docs_final: <span class="built_in">int</span> = <span class="number">5</span>,</span></span><br><span class="line"><span class="params"></span>) -&gt; <span class="type">Tuple</span>[<span class="built_in">str</span>, <span class="type">List</span>[LangchainDocument]]:</span><br><span class="line">    <span class="comment"># Gather documents with retriever</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;=&gt; Retrieving documents...&quot;</span>)</span><br><span class="line">    relevant_docs = knowledge_index.similarity_search(query=question, k=num_retrieved_docs)</span><br><span class="line">    relevant_docs = [doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> relevant_docs]  <span class="comment"># Keep only the text</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># Optionally rerank results</span></span><br><span class="line">    <span class="keyword">if</span> reranker:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;=&gt; Reranking documents...&quot;</span>)</span><br><span class="line">        relevant_docs = reranker.rerank(question, relevant_docs, k=num_docs_final)</span><br><span class="line">        relevant_docs = [doc[<span class="string">&quot;content&quot;</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> relevant_docs]</span><br><span class="line"></span><br><span class="line">    relevant_docs = relevant_docs[:num_docs_final]</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Build the final prompt</span></span><br><span class="line">    context = <span class="string">&quot;\nExtracted documents:\n&quot;</span></span><br><span class="line">    context += <span class="string">&quot;&quot;</span>.join([<span class="string">f&quot;Document <span class="subst">&#123;<span class="built_in">str</span>(i)&#125;</span>:::\n&quot;</span> + doc <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(relevant_docs)])</span><br><span class="line"></span><br><span class="line">    final_prompt = RAG_PROMPT_TEMPLATE.<span class="built_in">format</span>(question=question, context=context)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Redact an answer</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;=&gt; Generating answer...&quot;</span>)</span><br><span class="line">    answer = llm(final_prompt)[<span class="number">0</span>][<span class="string">&quot;generated_text&quot;</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> answer, relevant_docs</span><br></pre></td></tr></table></figure>
+
+<p>让我们看看 RAG 怎么回答用户的提问。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">question = <span class="string">&quot;how to create a pipeline object?&quot;</span></span><br><span class="line"></span><br><span class="line">answer, relevant_docs = answer_with_rag(question, READER_LLM, KNOWLEDGE_VECTOR_DATABASE, reranker=RERANKER)</span><br></pre></td></tr></table></figure>
+
+<p>=&gt; Retrieving documents…</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================Answer==================================&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;answer&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================Source docs==================================&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(relevant_docs):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Document <span class="subst">&#123;i&#125;</span>------------------------------------------------------------&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(doc)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><span class="line">==================================Answer==================================</span><br><span class="line">To create a pipeline object, follow these steps:</span><br><span class="line"></span><br><span class="line">1. Import the `pipeline` function from the `transformers` module:</span><br><span class="line"></span><br><span class="line">   ```python</span><br><span class="line">   from transformers import pipeline</span><br><span class="line">   ```</span><br><span class="line"></span><br><span class="line">2. Choose the task you want to perform, such as object detection, sentiment analysis, or image generation, and pass it as an argument to the `pipeline` function:</span><br><span class="line"></span><br><span class="line">   - For object detection:</span><br><span class="line"></span><br><span class="line">     ```python</span><br><span class="line">     &gt;&gt;&gt; object_detector = pipeline(&#x27;object-detection&#x27;)</span><br><span class="line">     &gt;&gt;&gt; object_detector(image)</span><br><span class="line">     [&amp;#123;&#x27;score&#x27;: 0.9982201457023621,</span><br><span class="line">       &#x27;label&#x27;:&#x27;remote&#x27;,</span><br><span class="line">       &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 40, &#x27;ymin&#x27;: 70, &#x27;xmax&#x27;: 175, &#x27;ymax&#x27;: 117&#125;&#125;,</span><br><span class="line">     ...]</span><br><span class="line">     ```</span><br><span class="line"></span><br><span class="line">   - For sentiment analysis:</span><br><span class="line"></span><br><span class="line">     ```python</span><br><span class="line">     &gt;&gt;&gt; classifier = pipeline(&quot;sentiment-analysis&quot;)</span><br><span class="line">     &gt;&gt;&gt; classifier(&quot;This is a great product!&quot;)</span><br><span class="line">     &amp;#123;&#x27;labels&#x27;: [&#x27;POSITIVE&#x27;],&#x27;scores&#x27;: tensor([0.9999], device=&#x27;cpu&#x27;, dtype=torch.float32)&#125;</span><br><span class="line">     ```</span><br><span class="line"></span><br><span class="line">   - For image generation:</span><br><span class="line"></span><br><span class="line">     ```python</span><br><span class="line">     &gt;&gt;&gt; image = pipeline(</span><br><span class="line">    ... &quot;stained glass of darth vader, backlight, centered composition, masterpiece, photorealistic, 8k&quot;</span><br><span class="line">    ... ).images[0]</span><br><span class="line">     &gt;&gt;&gt; image</span><br><span class="line">     PILImage mode RGB size 7680x4320 at 0 DPI</span><br><span class="line">     ```</span><br><span class="line">Note that the exact syntax may vary depending on the specific pipeline being used. Refer to the documentation for more details on how to use each pipeline.</span><br><span class="line"></span><br><span class="line">In general, the process involves importing the necessary modules, selecting the desired pipeline task, and passing it to the `pipeline` function along with any required arguments. The resulting pipeline object can then be used to perform the selected task on input data.</span><br><span class="line">==================================Source docs==================================</span><br><span class="line">Document 0------------------------------------------------------------</span><br><span class="line"># Allocate a pipeline for object detection</span><br><span class="line">&gt;&gt;&gt; object_detector = pipeline(&#x27;object-detection&#x27;)</span><br><span class="line">&gt;&gt;&gt; object_detector(image)</span><br><span class="line">[&amp;#123;&#x27;score&#x27;: 0.9982201457023621,</span><br><span class="line">  &#x27;label&#x27;: &#x27;remote&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 40, &#x27;ymin&#x27;: 70, &#x27;xmax&#x27;: 175, &#x27;ymax&#x27;: 117&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9960021376609802,</span><br><span class="line">  &#x27;label&#x27;: &#x27;remote&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 333, &#x27;ymin&#x27;: 72, &#x27;xmax&#x27;: 368, &#x27;ymax&#x27;: 187&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9954745173454285,</span><br><span class="line">  &#x27;label&#x27;: &#x27;couch&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 0, &#x27;ymin&#x27;: 1, &#x27;xmax&#x27;: 639, &#x27;ymax&#x27;: 473&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9988006353378296,</span><br><span class="line">  &#x27;label&#x27;: &#x27;cat&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 13, &#x27;ymin&#x27;: 52, &#x27;xmax&#x27;: 314, &#x27;ymax&#x27;: 470&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9986783862113953,</span><br><span class="line">  &#x27;label&#x27;: &#x27;cat&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 345, &#x27;ymin&#x27;: 23, &#x27;xmax&#x27;: 640, &#x27;ymax&#x27;: 368&#125;&#125;]</span><br><span class="line">Document 1------------------------------------------------------------</span><br><span class="line"># Allocate a pipeline for object detection</span><br><span class="line">&gt;&gt;&gt; object_detector = pipeline(&#x27;object_detection&#x27;)</span><br><span class="line">&gt;&gt;&gt; object_detector(image)</span><br><span class="line">[&amp;#123;&#x27;score&#x27;: 0.9982201457023621,</span><br><span class="line">  &#x27;label&#x27;: &#x27;remote&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 40, &#x27;ymin&#x27;: 70, &#x27;xmax&#x27;: 175, &#x27;ymax&#x27;: 117&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9960021376609802,</span><br><span class="line">  &#x27;label&#x27;: &#x27;remote&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 333, &#x27;ymin&#x27;: 72, &#x27;xmax&#x27;: 368, &#x27;ymax&#x27;: 187&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9954745173454285,</span><br><span class="line">  &#x27;label&#x27;: &#x27;couch&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 0, &#x27;ymin&#x27;: 1, &#x27;xmax&#x27;: 639, &#x27;ymax&#x27;: 473&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9988006353378296,</span><br><span class="line">  &#x27;label&#x27;: &#x27;cat&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 13, &#x27;ymin&#x27;: 52, &#x27;xmax&#x27;: 314, &#x27;ymax&#x27;: 470&#125;&#125;,</span><br><span class="line"> &amp;#123;&#x27;score&#x27;: 0.9986783862113953,</span><br><span class="line">  &#x27;label&#x27;: &#x27;cat&#x27;,</span><br><span class="line">  &#x27;box&#x27;: &amp;#123;&#x27;xmin&#x27;: 345, &#x27;ymin&#x27;: 23, &#x27;xmax&#x27;: 640, &#x27;ymax&#x27;: 368&#125;&#125;]</span><br><span class="line">Document 2------------------------------------------------------------</span><br><span class="line">Start by creating an instance of [`pipeline`] and specifying a task you want to use it for. In this guide, you&#x27;ll use the [`pipeline`] for sentiment analysis as an example:</span><br><span class="line"></span><br><span class="line">```py</span><br><span class="line">&gt;&gt;&gt; from transformers import pipeline</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; classifier = pipeline(&quot;sentiment-analysis&quot;)</span><br><span class="line">Document 3------------------------------------------------------------</span><br><span class="line">```</span><br><span class="line"></span><br><span class="line">## Add the pipeline to 🤗 Transformers</span><br><span class="line"></span><br><span class="line">If you want to contribute your pipeline to 🤗 Transformers, you will need to add a new module in the `pipelines` submodule</span><br><span class="line">with the code of your pipeline, then add it to the list of tasks defined in `pipelines/__init__.py`.</span><br><span class="line"></span><br><span class="line">Then you will need to add tests. Create a new file `tests/test_pipelines_MY_PIPELINE.py` with examples of the other tests.</span><br><span class="line"></span><br><span class="line">The `run_pipeline_test` function will be very generic and run on small random models on every possible</span><br><span class="line">architecture as defined by `model_mapping` and `tf_model_mapping`.</span><br><span class="line"></span><br><span class="line">This is very important to test future compatibility, meaning if someone adds a new model for</span><br><span class="line">`XXXForQuestionAnswering` then the pipeline test will attempt to run on it. Because the models are random it&#x27;s</span><br><span class="line">impossible to check for actual values, that&#x27;s why there is a helper `ANY` that will simply attempt to match the</span><br><span class="line">output of the pipeline TYPE.</span><br><span class="line"></span><br><span class="line">You also *need* to implement 2 (ideally 4) tests.</span><br><span class="line"></span><br><span class="line">- `test_small_model_pt` : Define 1 small model for this pipeline (doesn&#x27;t matter if the results don&#x27;t make sense)</span><br><span class="line">  and test the pipeline outputs. The results should be the same as `test_small_model_tf`.</span><br><span class="line">- `test_small_model_tf` : Define 1 small model for this pipeline (doesn&#x27;t matter if the results don&#x27;t make sense)</span><br><span class="line">  and test the pipeline outputs. The results should be the same as `test_small_model_pt`.</span><br><span class="line">- `test_large_model_pt` (`optional`): Tests the pipeline on a real pipeline where the results are supposed to</span><br><span class="line">  make sense. These tests are slow and should be marked as such. Here the goal is to showcase the pipeline and to make</span><br><span class="line">  sure there is no drift in future releases.</span><br><span class="line">- `test_large_model_tf` (`optional`): Tests the pipeline on a real pipeline where the results are supposed to</span><br><span class="line">  make sense. These tests are slow and should be marked as such. Here the goal is to showcase the pipeline and to make</span><br><span class="line">  sure there is no drift in future releases.</span><br><span class="line">Document 4------------------------------------------------------------</span><br><span class="line">```</span><br><span class="line"></span><br><span class="line">2. Pass a prompt to the pipeline to generate an image:</span><br><span class="line"></span><br><span class="line">```py</span><br><span class="line">image = pipeline(</span><br><span class="line">        &quot;stained glass of darth vader, backlight, centered composition, masterpiece, photorealistic, 8k&quot;</span><br><span class="line">).images[0]</span><br><span class="line">image</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/" title="RAG全流程解析">https://galaxyguan12.github.io/2025/05/21/ml/llm/rag1/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/05/19/cpp/cmake_mac/" rel="prev" title="C++ Mac 打包运行方案（cmake）">
+                  <i class="fa fa-angle-left"></i> C++ Mac 打包运行方案（cmake）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/05/29/cpp/cmake_win/" rel="next" title="C++ Windows 打包exe运行方案（cmake）">
+                  C++ Windows 打包exe运行方案（cmake） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

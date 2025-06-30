@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="背景使用C++编写的一个小项目，需要打包成ubuntu下的可执行文件，方便分发给其他ubuntu执行，因为docker镜像方案过于臃肿，所以需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++ linux打包运行方案（cmake）">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="背景使用C++编写的一个小项目，需要打包成ubuntu下的可执行文件，方便分发给其他ubuntu执行，因为docker镜像方案过于臃肿，所以需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/image.png">
+<meta property="article:published_time" content="2025-05-13T12:39:47.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.886Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="cmake">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/image.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/","path":"2025/05/13/cpp/cmake_linux/","title":"C++ linux打包运行方案（cmake）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++ linux打包运行方案（cmake） | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93"><span class="nav-number">2.</span> <span class="nav-text">动态库</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%93%E5%8C%85%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">打包方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E8%BD%AC%E9%9D%99%E6%80%81%E5%BA%93"><span class="nav-number">3.1.</span> <span class="nav-text">动态库转静态库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E6%89%93%E5%88%B0%E8%BD%AF%E4%BB%B6%E5%8C%85%E4%B8%AD"><span class="nav-number">3.2.</span> <span class="nav-text">动态库打到软件包中</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C"><span class="nav-number">4.</span> <span class="nav-text">运行</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++ linux打包运行方案（cmake） | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++ linux打包运行方案（cmake）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-05-13 20:39:47" itemprop="dateCreated datePublished" datetime="2025-05-13T20:39:47+08:00">2025-05-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>使用C++编写的一个小项目，需要打包成ubuntu下的可执行文件，方便分发给其他ubuntu执行，因为docker镜像方案过于臃肿，所以需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。</p>
+<span id="more"></span>
+
+
+<h1 id="动态库"><a href="#动态库" class="headerlink" title="动态库"></a>动态库</h1><p>经过依赖精简和梳理，项目最终必须依赖的动态库包括：pcl, yaml, rosbag(用于读取rosbag包)</p>
+<h1 id="打包方案"><a href="#打包方案" class="headerlink" title="打包方案"></a>打包方案</h1><p>第一步尝试将所有动态库转为静态库安装，发现 pcl 和 rosbag 间接依赖太多，只好暂时先将yaml库转为静态库，这里使用的方式是直接把yaml的源码包含进来。</p>
+<h2 id="动态库转静态库"><a href="#动态库转静态库" class="headerlink" title="动态库转静态库"></a>动态库转静态库</h2><p>这里把yaml的源码下载到 <code>项目目录/thirdparty/yaml-cpp</code>目录结构如下：</p>
+<p><img src="/2025/05/13/cpp/cmake_linux/image.png"></p>
+<p>在CMakeLists.txt中, 相关改动如下:</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="comment"># 添加子目录编译 yaml-cpp 库</span></span><br><span class="line"><span class="keyword">add_subdirectory</span>(thirdparty/yaml-cpp)</span><br><span class="line">...</span><br><span class="line"><span class="keyword">target_include_directories</span>(ExeFileName PUBLIC </span><br><span class="line">  ...</span><br><span class="line">  <span class="variable">$&#123;CMAKE_SOURCE_DIR&#125;</span>/thirdparty/yaml-cpp/<span class="keyword">include</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(ExeFileName PUBLIC </span><br><span class="line">  ...</span><br><span class="line">  yaml-cpp</span><br><span class="line">  ...</span><br><span class="line">)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h2 id="动态库打到软件包中"><a href="#动态库打到软件包中" class="headerlink" title="动态库打到软件包中"></a>动态库打到软件包中</h2><p>这里用到了<code>linuxdeploy-x86_64.AppImage</code>工具，安装方式为：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -O /usr/local/bin/linuxdeploy</span><br><span class="line">chmod +x /usr/local/bin/linuxdeploy</span><br></pre></td></tr></table></figure>
+
+<p>我们以pcl库为例，实际依赖库链接方式保持不变，只是需要在<code>CMakeLists.txt</code>最后加上对应的用于<code>linuxdeploy</code>的内容即可：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="keyword">find_package</span>(PCL REQUIRED COMPONENTS io)</span><br><span class="line">...</span><br><span class="line"><span class="keyword">target_include_directories</span>(ExeFileName PUBLIC </span><br><span class="line">  <span class="variable">$&#123;PCL_INCLUDE_DIRS&#125;</span></span><br><span class="line">  ...</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(ExeFileName PUBLIC </span><br><span class="line">  <span class="variable">$&#123;PCL_LIBRARIES&#125;</span> </span><br><span class="line">  ...</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置安装路径为 AppDir 结构</span></span><br><span class="line"><span class="keyword">install</span>(TARGETS ExeFileName DESTINATION usr/bin)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置 RPATH（确保运行时库加载正确）</span></span><br><span class="line"><span class="keyword">set_target_properties</span>(ExeFileName PROPERTIES</span><br><span class="line">    INSTALL_RPATH <span class="string">&quot;$ORIGIN/../lib&quot;</span>  <span class="comment"># 相对路径指向 ../lib</span></span><br><span class="line">    BUILD_WITH_INSTALL_RPATH <span class="keyword">TRUE</span></span><br><span class="line">    INSTALL_RPATH_USE_LINK_PATH <span class="keyword">TRUE</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改原有的打包命令，确保在 Ubuntu 18.04 中兼容</span></span><br><span class="line"><span class="keyword">add_custom_target</span>(bundle_appimage_all_in_one</span><br><span class="line">    <span class="keyword">COMMAND</span> mkdir -p AppDir/usr/lib</span><br><span class="line">    <span class="keyword">COMMAND</span> linuxdeploy --appdir AppDir    </span><br><span class="line">        -e $&lt;TARGET_FILE:ExeFileName&gt;        </span><br><span class="line">        --output appimage     </span><br><span class="line">        --plugin none             </span><br><span class="line">        --executable $&lt;TARGET_FILE:ExeFileName&gt;  <span class="comment"># 显式指定可执行文件</span></span><br><span class="line">    WORKING_DIRECTORY <span class="variable">$&#123;CMAKE_BINARY_DIR&#125;</span></span><br><span class="line">    DEPENDS ExeFileName</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意： 尽量在ubuntu低版本比如18.04上进行打包，以确保高版本ubuntu能向下兼容运行</p>
+</blockquote>
+<p>在编译打包脚本中需要增加<code>linuxdeploy</code>指令进行打包:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">linuxdeploy --appdir AppDir -e ./ExeFileName \</span><br><span class="line">    --library /lib/x86_64-linux-gnu/libusb-1.0.so.0 \</span><br><span class="line">    --library /lib/x86_64-linux-gnu/libexpat.so.1</span><br></pre></td></tr></table></figure>
+
+<p>因为在运行时发现还是报错，缺少依赖库，所以在<code>linuxdeploy</code>打包时把缺少的动态库显式指定出来。</p>
+<h1 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h1><p>运行命令为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LD_LIBRARY_PATH=./AppDir/usr/lib ./AppDir/usr/bin/ExeFileName ...</span><br></pre></td></tr></table></figure>
+
+<p>这里要强制带上<code>LD_LIBRARY_PATH</code>，这个问题有待解决，不过不影响使用。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/" title="C++ linux打包运行方案（cmake）">https://galaxyguan12.github.io/2025/05/13/cpp/cmake_linux/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/cmake/" rel="tag"># cmake</a>
+              <a href="/tags/linux/" rel="tag"># linux</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/04/15/ml/llm/quantization1/" rel="prev" title="大模型的量化与双重量化">
+                  <i class="fa fa-angle-left"></i> 大模型的量化与双重量化
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/05/19/cpp/cmake_mac/" rel="next" title="C++ Mac 打包运行方案（cmake）">
+                  C++ Mac 打包运行方案（cmake） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

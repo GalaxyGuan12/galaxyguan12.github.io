@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="介绍ROS2 VS ROS1ROS2相比于ROS1有以下几个主要改进点： 架构层面的改进去中心化架构：ROS1依赖于rosmaster作为中央节点管理器，一旦master崩溃整个系统就会瘫痪。ROS2采用了基于DDS（Data Distribution Service）的去中心化架构，节点可以直接发现和通信，提高了系统的鲁棒性和可靠性。 实时性支持：ROS2从底层设计就考虑了实时性要求，支持实时调">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ROS2 从入门到放弃">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="介绍ROS2 VS ROS1ROS2相比于ROS1有以下几个主要改进点： 架构层面的改进去中心化架构：ROS1依赖于rosmaster作为中央节点管理器，一旦master崩溃整个系统就会瘫痪。ROS2采用了基于DDS（Data Distribution Service）的去中心化架构，节点可以直接发现和通信，提高了系统的鲁棒性和可靠性。 实时性支持：ROS2从底层设计就考虑了实时性要求，支持实时调">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/Nodes-TopicandService.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/Topic-MultiplePublisherandMultipleSubscriber.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/Service-MultipleServiceClient.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/Action-SingleActionClient.gif">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/%E6%88%AA%E5%B1%8F2025-06-05%2014.20.41.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/%E6%88%AA%E5%B1%8F2025-06-05%2014.18.10.png">
+<meta property="article:published_time" content="2025-06-12T12:15:23.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:13.017Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="ROS2">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/Nodes-TopicandService.gif">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/","path":"2025/06/12/record/ros2_startup/","title":"ROS2 从入门到放弃"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ROS2 从入门到放弃 | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-VS-ROS1"><span class="nav-number">1.1.</span> <span class="nav-text">ROS2 VS ROS1</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E5%B1%82%E9%9D%A2%E7%9A%84%E6%94%B9%E8%BF%9B"><span class="nav-number">1.1.1.</span> <span class="nav-text">架构层面的改进</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6%E6%94%B9%E8%BF%9B"><span class="nav-number">1.1.2.</span> <span class="nav-text">通信机制改进</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E6%80%A7%E6%8F%90%E5%8D%87"><span class="nav-number">1.1.3.</span> <span class="nav-text">安全性提升</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E4%BD%93%E9%AA%8C%E6%94%B9%E8%BF%9B"><span class="nav-number">1.1.4.</span> <span class="nav-text">开发体验改进</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E5%85%BC%E5%AE%B9%E6%80%A7"><span class="nav-number">1.1.5.</span> <span class="nav-text">跨平台兼容性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-nodes"><span class="nav-number">1.2.</span> <span class="nav-text">ROS2 nodes</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Remapping"><span class="nav-number">1.2.1.</span> <span class="nav-text">Remapping</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Remap%E7%9A%84%E4%B8%BB%E8%A6%81%E7%94%A8%E9%80%94"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">Remap的主要用途</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84Remap%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">常见的Remap类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">实际应用场景</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-topics"><span class="nav-number">1.3.</span> <span class="nav-text">ROS2 topics</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-Service"><span class="nav-number">1.4.</span> <span class="nav-text">ROS2 Service</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-parameters"><span class="nav-number">1.5.</span> <span class="nav-text">ROS2 parameters</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E7%9A%84%E5%A3%B0%E6%98%8E%E5%92%8C%E4%BD%BF%E7%94%A8"><span class="nav-number">1.5.1.</span> <span class="nav-text">参数的声明和使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%93%8D%E4%BD%9C%E5%8F%82%E6%95%B0"><span class="nav-number">1.5.2.</span> <span class="nav-text">命令行操作参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E6%97%B6%E8%AE%BE%E7%BD%AE%E5%8F%82%E6%95%B0"><span class="nav-number">1.5.3.</span> <span class="nav-text">启动时设置参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E5%9B%9E%E8%B0%83"><span class="nav-number">1.5.4.</span> <span class="nav-text">参数回调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.5.5.</span> <span class="nav-text">参数的优势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROS2-Action"><span class="nav-number">1.6.</span> <span class="nav-text">ROS2 Action</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Action-vs-Service-vs-Topic"><span class="nav-number">1.6.1.</span> <span class="nav-text">Action vs Service vs Topic</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E7%9A%84%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86"><span class="nav-number">1.6.2.</span> <span class="nav-text">Action的组成部分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E6%8E%A5%E5%8F%A3%E5%AE%9A%E4%B9%89"><span class="nav-number">1.6.3.</span> <span class="nav-text">Action接口定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-number">1.6.4.</span> <span class="nav-text">Action的工作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7"><span class="nav-number">1.6.5.</span> <span class="nav-text">命令行工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%A4%BA%E4%BE%8B%EF%BC%88Python%EF%BC%89"><span class="nav-number">1.6.6.</span> <span class="nav-text">Action服务器示例（Python）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%A4%BA%E4%BE%8B%EF%BC%88Python%EF%BC%89"><span class="nav-number">1.6.7.</span> <span class="nav-text">Action客户端示例（Python）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF-1"><span class="nav-number">1.6.8.</span> <span class="nav-text">实际应用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Action%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.6.9.</span> <span class="nav-text">Action的优势</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%80%E5%8F%91"><span class="nav-number">3.</span> <span class="nav-text">开发</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89message-%E5%92%8C-srv"><span class="nav-number">3.1.</span> <span class="nav-text">自定义message 和 srv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CustomMessage-msg"><span class="nav-number">3.1.1.</span> <span class="nav-text">CustomMessage.msg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Num-msg"><span class="nav-number">3.1.2.</span> <span class="nav-text">Num.msg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ComplexMsg-msg"><span class="nav-number">3.1.3.</span> <span class="nav-text">ComplexMsg.msg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AddThreeInts-srv"><span class="nav-number">3.1.4.</span> <span class="nav-text">AddThreeInts.srv</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMakeLists-txt"><span class="nav-number">3.1.5.</span> <span class="nav-text">CMakeLists.txt</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#package-xml"><span class="nav-number">3.1.6.</span> <span class="nav-text">package.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Build"><span class="nav-number">3.1.7.</span> <span class="nav-text">Build</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">3.1.8.</span> <span class="nav-text">验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Talker-%E5%92%8C-Listener-python%E7%89%88%E6%9C%AC"><span class="nav-number">3.2.</span> <span class="nav-text">Talker 和 Listener(python版本)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BApackage"><span class="nav-number">3.2.1.</span> <span class="nav-text">创建package</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B0%E5%A2%9E-talker-%E5%92%8C-listenter-%E4%BB%A3%E7%A0%81"><span class="nav-number">3.2.2.</span> <span class="nav-text">新增 talker 和 listenter 代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#publisher-member-function-py"><span class="nav-number">3.2.2.1.</span> <span class="nav-text">publisher_member_function.py</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#subscriber-member-function-py"><span class="nav-number">3.2.2.2.</span> <span class="nav-text">subscriber_member_function.py</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#package-xml-1"><span class="nav-number">3.2.3.</span> <span class="nav-text">package.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#setup-py"><span class="nav-number">3.2.4.</span> <span class="nav-text">setup.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Build-1"><span class="nav-number">3.2.5.</span> <span class="nav-text">Build</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E9%AA%8C%E8%AF%81"><span class="nav-number">3.2.6.</span> <span class="nav-text">运行验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%95%E5%8C%85"><span class="nav-number">3.3.</span> <span class="nav-text">录包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MCAP-%E6%8E%A8%E8%8D%90"><span class="nav-number">3.3.1.</span> <span class="nav-text">MCAP(推荐)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DB3"><span class="nav-number">3.3.2.</span> <span class="nav-text">DB3</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%8C%85"><span class="nav-number">3.4.</span> <span class="nav-text">解包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mcap%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.4.1.</span> <span class="nav-text">mcap格式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E8%8A%82%E7%82%B9%E9%80%9A%E4%BF%A1"><span class="nav-number">3.5.</span> <span class="nav-text">多节点通信</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ROS2 从入门到放弃 | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ROS2 从入门到放弃
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-06-12 20:15:23" itemprop="dateCreated datePublished" datetime="2025-06-12T20:15:23+08:00">2025-06-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%97%A5%E5%B8%B8%E8%AE%B0%E5%BD%95/" itemprop="url" rel="index"><span itemprop="name">日常记录</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><h2 id="ROS2-VS-ROS1"><a href="#ROS2-VS-ROS1" class="headerlink" title="ROS2 VS ROS1"></a>ROS2 VS ROS1</h2><p>ROS2相比于ROS1有以下几个主要改进点：</p>
+<h3 id="架构层面的改进"><a href="#架构层面的改进" class="headerlink" title="架构层面的改进"></a>架构层面的改进</h3><p><strong>去中心化架构</strong>：ROS1依赖于rosmaster作为中央节点管理器，一旦master崩溃整个系统就会瘫痪。ROS2采用了基于DDS（Data Distribution Service）的去中心化架构，节点可以直接发现和通信，提高了系统的鲁棒性和可靠性。</p>
+<p><strong>实时性支持</strong>：ROS2从底层设计就考虑了实时性要求，支持实时调度和确定性通信，这对于工业机器人、自动驾驶等对时间敏感的应用至关重要。</p>
+<span id="more"></span>
+
+<h3 id="通信机制改进"><a href="#通信机制改进" class="headerlink" title="通信机制改进"></a>通信机制改进</h3><p><strong>QoS（服务质量）控制</strong>：ROS2引入了丰富的QoS策略，可以针对不同的应用场景配置可靠性、持久性、截止时间等参数。比如传感器数据可以配置为”最新优先”，而控制命令可以配置为”可靠传输”。</p>
+<p><strong>更好的网络支持</strong>：原生支持多机通信，不需要像ROS1那样复杂的网络配置。DDS协议天然支持广域网通信，便于分布式系统部署。</p>
+<h3 id="安全性提升"><a href="#安全性提升" class="headerlink" title="安全性提升"></a>安全性提升</h3><p><strong>内置安全机制</strong>：ROS2集成了DDS Security，提供认证、授权和加密功能，可以防止未授权访问和数据篡改，这对商业和军用机器人系统非常重要。</p>
+<h3 id="开发体验改进"><a href="#开发体验改进" class="headerlink" title="开发体验改进"></a>开发体验改进</h3><p><strong>多语言支持</strong>：除了C++和Python，ROS2还支持Java等更多编程语言，采用了更清晰的客户端库架构。</p>
+<p><strong>生命周期管理</strong>：引入了节点生命周期概念，可以更好地管理节点的启动、配置、激活、停用等状态，便于系统的部署和维护。</p>
+<h3 id="跨平台兼容性"><a href="#跨平台兼容性" class="headerlink" title="跨平台兼容性"></a>跨平台兼容性</h3><p><strong>Windows和macOS支持</strong>：ROS1主要面向Linux系统，而ROS2从设计之初就考虑了跨平台兼容性，支持Windows、macOS和各种嵌入式系统。</p>
+<h2 id="ROS2-nodes"><a href="#ROS2-nodes" class="headerlink" title="ROS2 nodes"></a>ROS2 nodes</h2><p>ROS2 中的每个节点负责单一、模块化的功能（例如，一个节点用于控制轮式电机，一个节点用于控制激光测距仪等）。每个节点可以通过主题、服务、动作或参数向其他节点发送和接收数据。</p>
+<p><img src="/2025/06/12/record/ros2_startup/Nodes-TopicandService.gif"></p>
+<p>一个完整的机器人系统由许多协同工作的节点组成。在 ROS 2 中，单个可执行文件（C++ 程序、Python 程序等）可以包含一个或多个节点。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ros2 run &lt;package_name&gt; &lt;executable_name&gt;</span><br><span class="line">ros2 node list</span><br><span class="line">ros2 node info &lt;node_name&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Remapping"><a href="#Remapping" class="headerlink" title="Remapping"></a>Remapping</h3><p>ROS2中的remap功能用于在运行时重新映射节点的各种标识符，主要作用是提供灵活性，让同一个程序能够在不同的命名空间或配置下运行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args --remap __node:=my_turtle</span><br></pre></td></tr></table></figure>
+
+<p>这个命令的作用是将节点名称从默认的<code>turtlesim</code>重新映射为<code>my_turtle</code>。</p>
+<h4 id="Remap的主要用途"><a href="#Remap的主要用途" class="headerlink" title="Remap的主要用途"></a>Remap的主要用途</h4><p><strong>避免节点名冲突</strong>：当你需要同时运行多个相同的节点时，可以通过重新映射节点名来避免冲突。比如运行多个海龟仿真器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args --remap __node:=turtle1</span><br><span class="line">ros2 run turtlesim turtlesim_node --ros-args --remap __node:=turtle2</span><br></pre></td></tr></table></figure>
+
+<p><strong>话题和服务重映射</strong>：可以重新映射话题名称，实现不同节点间的连接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args --remap /turtle1/cmd_vel:=/my_cmd_vel</span><br></pre></td></tr></table></figure>
+
+<p><strong>命名空间管理</strong>：在复杂系统中，可以将节点放入不同的命名空间：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args --remap __ns:=/robot1</span><br></pre></td></tr></table></figure>
+
+<h4 id="常见的Remap类型"><a href="#常见的Remap类型" class="headerlink" title="常见的Remap类型"></a>常见的Remap类型</h4><p><strong>节点名重映射</strong>：<code>__node:=new_name</code><strong>命名空间重映射</strong>：<code>__ns:=/new_namespace</code><br><strong>话题重映射</strong>：<code>old_topic:=new_topic</code><strong>服务重映射</strong>：<code>old_service:=new_service</code><strong>参数重映射</strong>：<code>old_param:=new_param</code></p>
+<h4 id="实际应用场景"><a href="#实际应用场景" class="headerlink" title="实际应用场景"></a>实际应用场景</h4><p><strong>多机器人系统</strong>：在一个系统中运行多个相同的机器人时，可以通过重映射将它们区分开：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ros2 run navigation2 nav2_node --ros-args --remap __ns:=/robot1</span><br><span class="line">ros2 run navigation2 nav2_node --ros-args --remap __ns:=/robot2</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试和调试</strong>：在开发过程中，可以将节点的输出重定向到测试话题：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run my_package sensor_node --ros-args --remap /sensor_data:=/test_data</span><br></pre></td></tr></table></figure>
+
+<p><strong>系统集成</strong>：当集成不同来源的ROS包时，可能需要重映射话题名以匹配系统的接口规范。</p>
+<p>Remap机制让ROS2系统具有很强的可配置性，无需修改源代码就能适应不同的部署场景，这对于构建灵活、可重用的机器人系统非常重要。</p>
+<h2 id="ROS2-topics"><a href="#ROS2-topics" class="headerlink" title="ROS2 topics"></a>ROS2 topics</h2><p>一个节点可以向任意数量的主题发布数据，并同时订阅任意数量的主题。</p>
+<p><img src="/2025/06/12/record/ros2_startup/Topic-MultiplePublisherandMultipleSubscriber.gif"></p>
+<p>主题是节点间数据传输的重要方式，因此也是系统不同部分之间数据传输的重要方式。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ros2 topic list</span><br><span class="line">ros2 topic list -t # 带msg类型</span><br><span class="line">ros2 topic echo &lt;topic_name&gt;</span><br><span class="line">ros2 topic info &lt;topic_name&gt;</span><br><span class="line">ros2 interface show tutorial_interfaces/msg/ComplexMsg</span><br><span class="line">ros2 topic pub &lt;topic_name&gt; &lt;msg_type&gt; &#x27;&lt;args&gt;&#x27;</span><br><span class="line">ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist &quot;&#123;linear: &#123;x: 2.0, y: 0.0, z: 0.0&#125;, angular: &#123;x: 0.0, y: 0.0, z: 1.8&#125;&#125;&quot;</span><br><span class="line">ros2 topic pub --rate 1 /turtle1/cmd_vel geometry_msgs/msg/Twist &quot;&#123;linear: &#123;x: 2.0, y: 0.0, z: 0.0&#125;, angular: &#123;x: 0.0, y: 0.0, z: 1.8&#125;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="ROS2-Service"><a href="#ROS2-Service" class="headerlink" title="ROS2 Service"></a>ROS2 Service</h2><p>服务是 ROS2 中节点间通信的另一种方式。服务基于调用-响应模型，而话题则基于发布者-订阅者模型。虽然话题允许节点订阅数据流并持续获取更新，但服务仅在客户端特定调用时提供数据。</p>
+<p><img src="/2025/06/12/record/ros2_startup/Service-MultipleServiceClient.gif"></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ros2 service list</span><br><span class="line">ros2 service type &lt;service_name&gt;</span><br><span class="line">ros2 service list -t</span><br><span class="line">ros2 service find &lt;type_name&gt; # 查找所有使用特定类型的服务</span><br><span class="line">ros2 interface show &lt;type_name&gt; # 查看服务接口的详细定义</span><br><span class="line">ros2 service call &lt;service_name&gt; &lt;service_type&gt; &lt;arguments&gt;</span><br><span class="line">ros2 service call /spawn turtlesim/srv/Spawn &quot;&#123;x: 2, y: 2, theta: 0.2, name: &#x27;&#x27;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="ROS2-parameters"><a href="#ROS2-parameters" class="headerlink" title="ROS2 parameters"></a>ROS2 parameters</h2><p>ROS2中的参数是节点的配置值，可以在运行时动态修改。每个参数都有名称、类型和值，支持的类型包括：</p>
+<ul>
+<li><p><code>bool</code>、<code>int64</code>、<code>double</code>、<code>string</code></p>
+</li>
+<li><p>以及它们的数组形式</p>
+</li>
+</ul>
+<h3 id="参数的声明和使用"><a href="#参数的声明和使用" class="headerlink" title="参数的声明和使用"></a>参数的声明和使用</h3><p><strong>在代码中声明参数</strong>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Python例子</span></span><br><span class="line"><span class="variable language_">self</span>.declare_parameter(<span class="string">&#x27;my_parameter&#x27;</span>, <span class="string">&#x27;default_value&#x27;</span>)</span><br><span class="line">value = <span class="variable language_">self</span>.get_parameter(<span class="string">&#x27;my_parameter&#x27;</span>).get_parameter_value().string_value</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// C++例子</span></span><br><span class="line"><span class="keyword">this</span>-&gt;<span class="built_in">declare_parameter</span>(<span class="string">&quot;my_parameter&quot;</span>, <span class="string">&quot;default_value&quot;</span>);</span><br><span class="line">std::string value = <span class="keyword">this</span>-&gt;<span class="built_in">get_parameter</span>(<span class="string">&quot;my_parameter&quot;</span>).<span class="built_in">as_string</span>();</span><br></pre></td></tr></table></figure>
+
+<h3 id="命令行操作参数"><a href="#命令行操作参数" class="headerlink" title="命令行操作参数"></a>命令行操作参数</h3><p><strong>查看所有参数</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param list</span><br></pre></td></tr></table></figure>
+
+<p><strong>查看特定节点的参数</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param list /turtlesim</span><br></pre></td></tr></table></figure>
+
+<p><strong>获取参数值</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param get /turtlesim background_r</span><br></pre></td></tr></table></figure>
+
+<p><strong>设置参数值</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param <span class="built_in">set</span> /turtlesim background_r 255</span><br></pre></td></tr></table></figure>
+
+<p><strong>dump参数到文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param dump /turtlesim &gt; turtlesim_params.yaml</span><br></pre></td></tr></table></figure>
+
+<p><strong>从文件加载参数</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 param load /turtlesim turtlesim_params.yaml</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动时设置参数"><a href="#启动时设置参数" class="headerlink" title="启动时设置参数"></a>启动时设置参数</h3><p><strong>通过命令行参数</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args -p background_r:=255 -p background_g:=0</span><br></pre></td></tr></table></figure>
+
+<p><strong>通过参数文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 run turtlesim turtlesim_node --ros-args --params-file my_params.yaml</span><br></pre></td></tr></table></figure>
+
+<p>参数文件格式：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">/turtlesim:</span></span><br><span class="line">  <span class="attr">ros__parameters:</span></span><br><span class="line">    <span class="attr">background_r:</span> <span class="number">255</span></span><br><span class="line">    <span class="attr">background_g:</span> <span class="number">0</span></span><br><span class="line">    <span class="attr">background_b:</span> <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="参数回调"><a href="#参数回调" class="headerlink" title="参数回调"></a>参数回调</h3><p>可以设置参数变化时的回调函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">parameter_callback</span>(<span class="params">self, params</span>):</span><br><span class="line">    <span class="keyword">for</span> param <span class="keyword">in</span> params:</span><br><span class="line">        <span class="keyword">if</span> param.name == <span class="string">&#x27;my_parameter&#x27;</span>:</span><br><span class="line">            <span class="comment"># 处理参数变化</span></span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">    <span class="keyword">return</span> SetParametersResult(successful=<span class="literal">True</span>)</span><br><span class="line"><span class="variable language_">self</span>.add_on_set_parameters_callback(<span class="variable language_">self</span>.parameter_callback)</span><br></pre></td></tr></table></figure>
+
+<h3 id="参数的优势"><a href="#参数的优势" class="headerlink" title="参数的优势"></a>参数的优势</h3><ul>
+<li><p><strong>动态配置</strong>：运行时可以修改参数，无需重启节点&#x20;</p>
+</li>
+<li><p><strong>持久化</strong>：参数可以保存到文件中，便于配置管理&#x20;</p>
+</li>
+<li><p><strong>类型安全</strong>：参数有明确的类型，减少配置错误&#x20;</p>
+</li>
+<li><p><strong>命名空间隔离</strong>：不同节点的参数互不冲突&#x20;</p>
+</li>
+<li><p><strong>验证机制</strong>：可以对参数值进行合法性检查</p>
+</li>
+</ul>
+<h2 id="ROS2-Action"><a href="#ROS2-Action" class="headerlink" title="ROS2 Action"></a>ROS2 Action</h2><p><img src="/2025/06/12/record/ros2_startup/Action-SingleActionClient.gif"></p>
+<p>ROS2的Action是一种用于处理<strong>长时间运行任务</strong>的异步通信机制，它结合了服务和话题的特点，提供了更丰富的交互方式。</p>
+<h3 id="Action-vs-Service-vs-Topic"><a href="#Action-vs-Service-vs-Topic" class="headerlink" title="Action vs Service vs Topic"></a>Action vs Service vs Topic</h3><p><strong>Topic（话题）</strong>：单向通信，发布后不知道结果&#x20;</p>
+<p><strong>Service（服务）</strong>：同步请求-响应，适合快速操作&#x20;</p>
+<p><strong>Action（动作）</strong>：异步请求-响应，支持中途取消和进度反馈，适合耗时操作</p>
+<h3 id="Action的组成部分"><a href="#Action的组成部分" class="headerlink" title="Action的组成部分"></a>Action的组成部分</h3><p>Action由三个消息类型组成：</p>
+<p><strong>Goal（目标）</strong>：客户端发送给服务器的任务请求&#x20;</p>
+<p><strong>Result（结果）</strong>：任务完成后服务器返回的最终结果<br><strong>Feedback（反馈）</strong>：任务执行过程中的进度信息</p>
+<h3 id="Action接口定义"><a href="#Action接口定义" class="headerlink" title="Action接口定义"></a>Action接口定义</h3><p>Action接口文件以<code>.action</code>结尾，格式如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Goal definition</span></span><br><span class="line">int32 order</span><br><span class="line">Result definition</span><br><span class="line">int32[] sequence</span><br><span class="line">Feedback definition</span><br><span class="line">int32[] partial_sequence</span><br></pre></td></tr></table></figure>
+
+<p>例如Fibonacci动作：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Goal: 计算斐波那契数列到第几项</span></span><br><span class="line">int32 order</span><br><span class="line"><span class="comment"># Result: 完整的斐波那契数列</span></span><br><span class="line">int32[] sequence  </span><br><span class="line"><span class="comment"># Feedback: 当前计算进度</span></span><br><span class="line">int32[] partial_sequence</span><br></pre></td></tr></table></figure>
+
+<h3 id="Action的工作流程"><a href="#Action的工作流程" class="headerlink" title="Action的工作流程"></a>Action的工作流程</h3><ol>
+<li><p><strong>客户端发送Goal</strong>：向Action服务器发送任务目标</p>
+</li>
+<li><p><strong>服务器接受Goal</strong>：服务器决定是否接受这个任务</p>
+</li>
+<li><p><strong>执行过程中发送Feedback</strong>：服务器定期发送进度更新</p>
+</li>
+<li><p><strong>客户端可以取消</strong>：任务执行过程中客户端可以请求取消</p>
+</li>
+<li><p><strong>服务器返回Result</strong>：任务完成或被取消时返回最终结果</p>
+</li>
+</ol>
+<h3 id="命令行工具"><a href="#命令行工具" class="headerlink" title="命令行工具"></a>命令行工具</h3><p><strong>列出所有Action</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 action list</span><br></pre></td></tr></table></figure>
+
+<p><strong>查看Action类型</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 action list -t</span><br></pre></td></tr></table></figure>
+
+<p><strong>查看Action接口定义</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 interface show turtlesim/action/RotateAbsolute</span><br></pre></td></tr></table></figure>
+
+<p><strong>发送Action目标</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute <span class="string">&quot;&#123;theta: 1.57&#125;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>发送目标并显示反馈</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute <span class="string">&quot;&#123;theta: 1.57&#125;&quot;</span> --feedback</span><br></pre></td></tr></table></figure>
+
+<h3 id="Action服务器示例（Python）"><a href="#Action服务器示例（Python）" class="headerlink" title="Action服务器示例（Python）"></a>Action服务器示例（Python）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> rclpy</span><br><span class="line"><span class="keyword">from</span> rclpy.action <span class="keyword">import</span> ActionServer</span><br><span class="line"><span class="keyword">from</span> rclpy.node <span class="keyword">import</span> Node</span><br><span class="line"><span class="keyword">from</span> example_interfaces.action <span class="keyword">import</span> Fibonacci</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FibonacciActionServer</span>(<span class="title class_ inherited__">Node</span>):</span><br><span class="line">    <span class="keyword">def</span> </span><br><span class="line"><span class="title function_">__init__</span></span><br><span class="line">(<span class="variable language_">self</span>):</span><br><span class="line">        <span class="built_in">super</span>().</span><br><span class="line">__init__</span><br><span class="line">(<span class="string">&#x27;fibonacci_action_server&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>._action_server = ActionServer(</span><br><span class="line">            <span class="variable language_">self</span>,</span><br><span class="line">            Fibonacci,</span><br><span class="line">            <span class="string">&#x27;fibonacci&#x27;</span>,</span><br><span class="line">            <span class="variable language_">self</span>.execute_callback</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">execute_callback</span>(<span class="params">self, goal_handle</span>):</span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;执行目标...&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 创建反馈消息</span></span><br><span class="line">        feedback_msg = Fibonacci.Feedback()</span><br><span class="line">        feedback_msg.partial_sequence = [<span class="number">0</span>, <span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 执行斐波那契计算</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, goal_handle.request.order):</span><br><span class="line">            <span class="keyword">if</span> goal_handle.is_cancel_requested:</span><br><span class="line">                goal_handle.canceled()</span><br><span class="line">                <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;目标被取消&#x27;</span>)</span><br><span class="line">                <span class="keyword">return</span> Fibonacci.Result()</span><br><span class="line"></span><br><span class="line">            <span class="comment"># 计算下一个数</span></span><br><span class="line">            next_num = feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-<span class="number">1</span>]</span><br><span class="line">            feedback_msg.partial_sequence.append(next_num)</span><br><span class="line"></span><br><span class="line">            <span class="comment"># 发送反馈</span></span><br><span class="line">            goal_handle.publish_feedback(feedback_msg)</span><br><span class="line">            time.sleep(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 设置成功并返回结果</span></span><br><span class="line">        goal_handle.succeed()</span><br><span class="line">        result = Fibonacci.Result()</span><br><span class="line">        result.sequence = feedback_msg.partial_sequence</span><br><span class="line">        <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
+
+<h3 id="Action客户端示例（Python）"><a href="#Action客户端示例（Python）" class="headerlink" title="Action客户端示例（Python）"></a>Action客户端示例（Python）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> rclpy</span><br><span class="line"><span class="keyword">from</span> rclpy.action <span class="keyword">import</span> ActionClient</span><br><span class="line"><span class="keyword">from</span> rclpy.node <span class="keyword">import</span> Node</span><br><span class="line"><span class="keyword">from</span> example_interfaces.action <span class="keyword">import</span> Fibonacci</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FibonacciActionClient</span>(<span class="title class_ inherited__">Node</span>):</span><br><span class="line">    <span class="keyword">def</span> </span><br><span class="line"><span class="title function_">__init__</span></span><br><span class="line">(<span class="variable language_">self</span>):</span><br><span class="line">        <span class="built_in">super</span>().</span><br><span class="line">__init__</span><br><span class="line">(<span class="string">&#x27;fibonacci_action_client&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>._action_client = ActionClient(<span class="variable language_">self</span>, Fibonacci, <span class="string">&#x27;fibonacci&#x27;</span>)</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">send_goal</span>(<span class="params">self, order</span>):</span><br><span class="line">        goal_msg = Fibonacci.Goal()</span><br><span class="line">        goal_msg.order = order</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>._action_client.wait_for_server()</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>._send_goal_future = <span class="variable language_">self</span>._action_client.send_goal_async(</span><br><span class="line">            goal_msg,</span><br><span class="line">            feedback_callback=<span class="variable language_">self</span>.feedback_callback</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>._send_goal_future.add_done_callback(<span class="variable language_">self</span>.goal_response_callback)</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">goal_response_callback</span>(<span class="params">self, future</span>):</span><br><span class="line">        goal_handle = future.result()</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> goal_handle.accepted:</span><br><span class="line">            <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;目标被拒绝&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;目标被接受&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>._get_result_future = goal_handle.get_result_async()</span><br><span class="line">        <span class="variable language_">self</span>._get_result_future.add_done_callback(<span class="variable language_">self</span>.get_result_callback)</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">feedback_callback</span>(<span class="params">self, feedback_msg</span>):</span><br><span class="line">        feedback = feedback_msg.feedback</span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">f&#x27;收到反馈: <span class="subst">&#123;feedback.partial_sequence&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_result_callback</span>(<span class="params">self, future</span>):</span><br><span class="line">        result = future.result().result</span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">f&#x27;结果: <span class="subst">&#123;result.sequence&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="实际应用场景-1"><a href="#实际应用场景-1" class="headerlink" title="实际应用场景"></a>实际应用场景</h3><p><strong>导航系统</strong>：</p>
+<ul>
+<li><p>Goal: 目标位置坐标</p>
+</li>
+<li><p>Feedback: 当前位置和剩余距离</p>
+</li>
+<li><p>Result: 导航成功或失败状态</p>
+</li>
+</ul>
+<p><strong>机械臂控制</strong>：</p>
+<ul>
+<li><p>Goal: 目标关节角度或末端位置</p>
+</li>
+<li><p>Feedback: 当前执行进度</p>
+</li>
+<li><p>Result: 运动完成状态</p>
+</li>
+</ul>
+<p><strong>视觉处理</strong>：</p>
+<ul>
+<li><p>Goal: 要处理的图像或视频</p>
+</li>
+<li><p>Feedback: 处理进度百分比</p>
+</li>
+<li><p>Result: 检测或识别结果</p>
+</li>
+</ul>
+<h3 id="Action的优势"><a href="#Action的优势" class="headerlink" title="Action的优势"></a>Action的优势</h3><p><strong>异步执行</strong>：不会阻塞客户端，可以同时处理多个任务&#x20;</p>
+<p><strong>进度反馈</strong>：客户端可以实时了解任务执行状态&#x20;</p>
+<p><strong>可取消性</strong>：客户端可以在任务执行过程中取消&#x20;</p>
+<p><strong>错误处理</strong>：支持丰富的状态管理和错误处理机制&#x20;</p>
+<p><strong>抢占机制</strong>：新的目标可以抢占正在执行的目标</p>
+<p>Action机制使得ROS2能够优雅地处理复杂的长时间运行任务，是构建智能机器人系统的重要工具，特别适合导航、操作、感知等需要时间的机器人任务。</p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>基于ubuntu 22.04 基础镜像，安装非GUI版本的ROS2发行版 humble。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> ubuntu:<span class="number">22.04</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apt-get update \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install software-properties-common -y \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; add-apt-repository universe -y \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt update &amp;&amp;  apt install locales -y \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; locale-gen en_US en_US.UTF-8 \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; <span class="built_in">export</span> LANG=en_US.UTF-8 \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install curl gnupg -y \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; <span class="built_in">echo</span> <span class="string">&quot;deb [arch=<span class="subst">$(dpkg --print-architecture)</span> signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu <span class="subst">$(. /etc/os-release &amp;&amp; echo $UBUNTU_CODENAME)</span> main&quot;</span> |  <span class="built_in">tee</span> /etc/apt/sources.list.d/ros2.list &gt; /dev/null \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt update \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt upgrade -y</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装基础版（无GUI）</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">export</span> DEBIAN_FRONTEND=noninteractive \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; <span class="built_in">ln</span> -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; <span class="built_in">echo</span> <span class="string">&quot;tzdata tzdata/Areas select Asia&quot;</span> | debconf-set-selections \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; <span class="built_in">echo</span> <span class="string">&quot;tzdata tzdata/Zones/Asia select Shanghai&quot;</span> | debconf-set-selections \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y ros-humble-ros-base \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y python3-rosdep python3-colcon-common-extensions python3-argcomplete \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y build-essential cmake \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y gcc g++ \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y libstdc++-12-dev \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; apt install -y ros-humble-rosbag2-storage-mcap</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> get-pip.py /root/</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> python3 /root/get-pip.py \</span></span><br><span class="line"><span class="language-bash"> &amp;&amp; pip install mcap-ros2-support</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">echo</span> <span class="string">&quot;source /opt/ros/humble/setup.bash&quot;</span> &gt;&gt; ~/.bashrc</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apt-get install -y vim</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="开发"><a href="#开发" class="headerlink" title="开发"></a>开发</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p ~/workspace/src</span><br></pre></td></tr></table></figure>
+
+<h2 id="自定义message-和-srv"><a href="#自定义message-和-srv" class="headerlink" title="自定义message 和 srv"></a>自定义message 和 srv</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">cd ~/workspace/src</span><br><span class="line">ros2 pkg create --build-type ament_cmake tutorial_interfaces</span><br><span class="line">cd tutorial_interfaces</span><br><span class="line">mkdir msg</span><br><span class="line">mkdir srv</span><br><span class="line">cd msg</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">分别定义三个msg</span></span><br><span class="line">touch CustomMessage.msg Num.msg ComplexMsg.msg</span><br><span class="line">cd ..</span><br><span class="line">cd srv</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">定义 srv</span></span><br><span class="line">touch AddThreeInts.srv</span><br></pre></td></tr></table></figure>
+
+<h3 id="CustomMessage-msg"><a href="#CustomMessage-msg" class="headerlink" title="CustomMessage.msg"></a>CustomMessage.msg</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">string first_name</span><br><span class="line">string last_name</span><br><span class="line">uint8 age</span><br><span class="line">float32 score</span><br><span class="line">bool is_active</span><br><span class="line">float32[] measurements</span><br></pre></td></tr></table></figure>
+
+<h3 id="Num-msg"><a href="#Num-msg" class="headerlink" title="Num.msg"></a>Num.msg</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int64 num</span><br></pre></td></tr></table></figure>
+
+<h3 id="ComplexMsg-msg"><a href="#ComplexMsg-msg" class="headerlink" title="ComplexMsg.msg"></a>ComplexMsg.msg</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CustomMessage[] custom_msg</span><br><span class="line">Num num</span><br><span class="line">string first_name</span><br><span class="line">string last_name</span><br><span class="line">uint8 age</span><br><span class="line">float32 score</span><br><span class="line">bool is_active</span><br><span class="line">float32[] measurements</span><br></pre></td></tr></table></figure>
+
+<h3 id="AddThreeInts-srv"><a href="#AddThreeInts-srv" class="headerlink" title="AddThreeInts.srv"></a>AddThreeInts.srv</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">int64</span> <span class="string">a</span></span><br><span class="line"><span class="string">int64</span> <span class="string">b</span></span><br><span class="line"><span class="string">int64</span> <span class="string">c</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="string">int64</span> <span class="string">sum</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="CMakeLists-txt"><a href="#CMakeLists-txt" class="headerlink" title="CMakeLists.txt"></a>CMakeLists.txt</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">cmake_minimum_required(VERSION 3.8)</span><br><span class="line">project(tutorial_interfaces)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES <span class="string">&quot;Clang&quot;</span>)</span><br><span class="line">  add_compile_options(-Wall -Wextra -Wpedantic)</span><br><span class="line">endif()</span><br><span class="line"></span><br><span class="line"><span class="comment"># find dependencies</span></span><br><span class="line">find_package(ament_cmake REQUIRED)</span><br><span class="line"><span class="comment"># uncomment the following section in order to fill in</span></span><br><span class="line"><span class="comment"># further dependencies manually.</span></span><br><span class="line"><span class="comment"># find_package(&lt;dependency&gt; REQUIRED)</span></span><br><span class="line">find_package(rosidl_default_generators REQUIRED)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(BUILD_TESTING)</span><br><span class="line">  find_package(ament_lint_auto REQUIRED)</span><br><span class="line">  <span class="comment"># the following line skips the linter which checks for copyrights</span></span><br><span class="line">  <span class="comment"># comment the line when a copyright and license is added to all source files</span></span><br><span class="line">  <span class="built_in">set</span>(ament_cmake_copyright_FOUND TRUE)</span><br><span class="line">  <span class="comment"># the following line skips cpplint (only works in a git repo)</span></span><br><span class="line">  <span class="comment"># comment the line when this package is in a git repo and when</span></span><br><span class="line">  <span class="comment"># a copyright and license is added to all source files</span></span><br><span class="line">  <span class="built_in">set</span>(ament_cmake_cpplint_FOUND TRUE)</span><br><span class="line">  ament_lint_auto_find_test_dependencies()</span><br><span class="line">endif()</span><br><span class="line"></span><br><span class="line">rosidl_generate_interfaces(<span class="variable">$&#123;PROJECT_NAME&#125;</span></span><br><span class="line">  <span class="string">&quot;msg/Num.msg&quot;</span></span><br><span class="line">  <span class="string">&quot;msg/CustomMessage.msg&quot;</span></span><br><span class="line">  <span class="string">&quot;msg/ComplexMsg.msg&quot;</span></span><br><span class="line">  <span class="string">&quot;srv/AddThreeInts.srv&quot;</span></span><br><span class="line"> )</span><br><span class="line"></span><br><span class="line">ament_package()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="package-xml"><a href="#package-xml" class="headerlink" title="package.xml"></a>package.xml</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span>?&gt;</span></span><br><span class="line"><span class="meta">&lt;?xml-model href=<span class="string">&quot;http://download.ros.org/schema/package_format3.xsd&quot;</span> schematypens=<span class="string">&quot;http://www.w3.org/2001/XMLSchema&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">package</span> <span class="attr">format</span>=<span class="string">&quot;3&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>tutorial_interfaces<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">description</span>&gt;</span>TODO: Package description<span class="tag">&lt;/<span class="name">description</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">maintainer</span> <span class="attr">email</span>=<span class="string">&quot;root@todo.todo&quot;</span>&gt;</span>root<span class="tag">&lt;/<span class="name">maintainer</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">license</span>&gt;</span>TODO: License declaration<span class="tag">&lt;/<span class="name">license</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">buildtool_depend</span>&gt;</span>ament_cmake<span class="tag">&lt;/<span class="name">buildtool_depend</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>ament_lint_auto<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>ament_lint_common<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">export</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">build_type</span>&gt;</span>ament_cmake<span class="tag">&lt;/<span class="name">build_type</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">export</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">build_depend</span>&gt;</span>rosidl_default_generators<span class="tag">&lt;/<span class="name">build_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">exec_depend</span>&gt;</span>rosidl_default_runtime<span class="tag">&lt;/<span class="name">exec_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">member_of_group</span>&gt;</span>rosidl_interface_packages<span class="tag">&lt;/<span class="name">member_of_group</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">package</span>&gt;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~/workspace</span><br><span class="line">colcon build --packages-select tutorial_interfaces</span><br></pre></td></tr></table></figure>
+
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">. install/setup.bash</span><br><span class="line">ros2 interface show tutorial_interfaces/msg/ComplexMsg</span><br><span class="line">ros2 interface show tutorial_interfaces/srv/AddThreeInts</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Talker-和-Listener-python版本"><a href="#Talker-和-Listener-python版本" class="headerlink" title="Talker 和 Listener(python版本)"></a>Talker 和 Listener(python版本)</h2><h3 id="创建package"><a href="#创建package" class="headerlink" title="创建package"></a>创建package</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~/workspace/src</span><br><span class="line">ros2 pkg create --build-type ament_python py_pubsub</span><br></pre></td></tr></table></figure>
+
+<h3 id="新增-talker-和-listenter-代码"><a href="#新增-talker-和-listenter-代码" class="headerlink" title="新增 talker 和 listenter 代码"></a>新增 talker 和 listenter 代码</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd py_pubsub/py_pubsub</span><br><span class="line">touch publisher_member_function.py subscriber_member_function.py</span><br></pre></td></tr></table></figure>
+
+<h4 id="publisher-member-function-py"><a href="#publisher-member-function-py" class="headerlink" title="publisher_member_function.py"></a>publisher_member_function.py</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Copyright 2016 Open Source Robotics Foundation, Inc.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></span><br><span class="line"><span class="comment"># you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"># You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></span><br><span class="line"><span class="comment"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"># See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"># limitations under the License.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> rclpy</span><br><span class="line"><span class="keyword">from</span> rclpy.node <span class="keyword">import</span> Node</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> std_msgs.msg <span class="keyword">import</span> String</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">from</span> tutorial_interfaces.msg <span class="keyword">import</span> Num </span><br><span class="line"><span class="comment"># 导入自定义消息</span></span><br><span class="line"><span class="keyword">from</span> tutorial_interfaces.msg <span class="keyword">import</span> CustomMessage</span><br><span class="line"><span class="keyword">from</span> tutorial_interfaces.msg <span class="keyword">import</span> ComplexMsg</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MinimalPublisher</span>(<span class="title class_ inherited__">Node</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__(<span class="string">&#x27;minimal_publisher&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.publisher_ = <span class="variable language_">self</span>.create_publisher(Num, <span class="string">&#x27;topic&#x27;</span>, <span class="number">10</span>)</span><br><span class="line">        <span class="comment"># 创建发布者，使用自定义消息类型</span></span><br><span class="line">        <span class="variable language_">self</span>.publisher2_ = <span class="variable language_">self</span>.create_publisher(CustomMessage, <span class="string">&#x27;custom_topic&#x27;</span>, <span class="number">10</span>)</span><br><span class="line">        <span class="variable language_">self</span>.publisher3_ = <span class="variable language_">self</span>.create_publisher(ComplexMsg, <span class="string">&#x27;complex_topic&#x27;</span>, <span class="number">10</span>)</span><br><span class="line">        timer_period = <span class="number">0.05</span>  <span class="comment"># seconds</span></span><br><span class="line">        <span class="variable language_">self</span>.timer = <span class="variable language_">self</span>.create_timer(timer_period, <span class="variable language_">self</span>.timer_callback)</span><br><span class="line">        <span class="variable language_">self</span>.i = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">timer_callback</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="comment"># msg = String()</span></span><br><span class="line">        <span class="comment"># msg.data = &#x27;Hello World: %d&#x27; % self.i</span></span><br><span class="line">        msg1 = Num()                                           <span class="comment"># CHANGE</span></span><br><span class="line">        msg1.num = <span class="variable language_">self</span>.i </span><br><span class="line">        <span class="variable language_">self</span>.publisher_.publish(msg1)</span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;Publishing: &quot;%s&quot;&#x27;</span> % msg1.num)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 创建自定义消息实例</span></span><br><span class="line">        msg2 = CustomMessage()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 填充消息内容</span></span><br><span class="line">        msg2.first_name = <span class="string">f&quot;User<span class="subst">&#123;self.i&#125;</span>&quot;</span></span><br><span class="line">        msg2.last_name = <span class="string">&quot;Doe&quot;</span></span><br><span class="line">        msg2.age = random.randint(<span class="number">18</span>, <span class="number">65</span>)</span><br><span class="line">        msg2.score = <span class="built_in">round</span>(random.uniform(<span class="number">0.0</span>, <span class="number">100.0</span>), <span class="number">2</span>)</span><br><span class="line">        msg2.is_active = <span class="built_in">bool</span>(<span class="variable language_">self</span>.i % <span class="number">2</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 添加浮点数数组</span></span><br><span class="line">        msg2.measurements = <span class="built_in">list</span>(np.random.uniform(<span class="number">0</span>, <span class="number">10</span>, <span class="number">5</span>).<span class="built_in">round</span>(<span class="number">2</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 发布消息</span></span><br><span class="line">        <span class="variable language_">self</span>.publisher2_.publish(msg2)</span><br><span class="line"></span><br><span class="line">        msg3 = ComplexMsg()</span><br><span class="line"></span><br><span class="line">        tmpMsgs = []</span><br><span class="line">        <span class="keyword">for</span> c <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">100</span>):</span><br><span class="line">            tmpMsgs.append(msg2)</span><br><span class="line">        msg3.custom_msg = tmpMsgs</span><br><span class="line">        msg3.num = msg1</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 填充消息内容</span></span><br><span class="line">        msg3.first_name = <span class="string">f&quot;User<span class="subst">&#123;self.i&#125;</span>&quot;</span></span><br><span class="line">        msg3.last_name = <span class="string">&quot;Doe&quot;</span></span><br><span class="line">        msg3.age = random.randint(<span class="number">18</span>, <span class="number">65</span>)</span><br><span class="line">        msg3.score = <span class="built_in">round</span>(random.uniform(<span class="number">0.0</span>, <span class="number">100.0</span>), <span class="number">2</span>)</span><br><span class="line">        msg3.is_active = <span class="built_in">bool</span>(<span class="variable language_">self</span>.i % <span class="number">2</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 添加浮点数数组</span></span><br><span class="line">        msg3.measurements = <span class="built_in">list</span>(np.random.uniform(<span class="number">0</span>, <span class="number">10</span>, <span class="number">5</span>).<span class="built_in">round</span>(<span class="number">2</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 发布消息</span></span><br><span class="line">        <span class="variable language_">self</span>.publisher3_.publish(msg3)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.i += <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>(<span class="params">args=<span class="literal">None</span></span>):</span><br><span class="line">    rclpy.init(args=args)</span><br><span class="line"></span><br><span class="line">    minimal_publisher = MinimalPublisher()</span><br><span class="line"></span><br><span class="line">    rclpy.spin(minimal_publisher)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Destroy the node explicitly</span></span><br><span class="line">    <span class="comment"># (optional - otherwise it will be done automatically</span></span><br><span class="line">    <span class="comment"># when the garbage collector destroys the node object)</span></span><br><span class="line">    minimal_publisher.destroy_node()</span><br><span class="line">    rclpy.shutdown()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    main()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="subscriber-member-function-py"><a href="#subscriber-member-function-py" class="headerlink" title="subscriber_member_function.py"></a>subscriber_member_function.py</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Copyright 2016 Open Source Robotics Foundation, Inc.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></span><br><span class="line"><span class="comment"># you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"># You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></span><br><span class="line"><span class="comment"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"># See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"># limitations under the License.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> rclpy</span><br><span class="line"><span class="keyword">from</span> rclpy.node <span class="keyword">import</span> Node</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> tutorial_interfaces.msg <span class="keyword">import</span> Num</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MinimalSubscriber</span>(<span class="title class_ inherited__">Node</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__(<span class="string">&#x27;minimal_subscriber&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.subscription = <span class="variable language_">self</span>.create_subscription(</span><br><span class="line">            Num,</span><br><span class="line">            <span class="string">&#x27;topic&#x27;</span>,</span><br><span class="line">            <span class="variable language_">self</span>.listener_callback,</span><br><span class="line">            <span class="number">10</span>)</span><br><span class="line">        <span class="variable language_">self</span>.subscription  <span class="comment"># prevent unused variable warning</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">listener_callback</span>(<span class="params">self, msg</span>):</span><br><span class="line">        <span class="variable language_">self</span>.get_logger().info(<span class="string">&#x27;I heard: &quot;%s&quot;&#x27;</span> % msg.num)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>(<span class="params">args=<span class="literal">None</span></span>):</span><br><span class="line">    rclpy.init(args=args)</span><br><span class="line"></span><br><span class="line">    minimal_subscriber = MinimalSubscriber()</span><br><span class="line"></span><br><span class="line">    rclpy.spin(minimal_subscriber)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Destroy the node explicitly</span></span><br><span class="line">    <span class="comment"># (optional - otherwise it will be done automatically</span></span><br><span class="line">    <span class="comment"># when the garbage collector destroys the node object)</span></span><br><span class="line">    minimal_subscriber.destroy_node()</span><br><span class="line">    rclpy.shutdown()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    main()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="package-xml-1"><a href="#package-xml-1" class="headerlink" title="package.xml"></a>package.xml</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span>?&gt;</span></span><br><span class="line"><span class="meta">&lt;?xml-model href=<span class="string">&quot;http://download.ros.org/schema/package_format3.xsd&quot;</span> schematypens=<span class="string">&quot;http://www.w3.org/2001/XMLSchema&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">package</span> <span class="attr">format</span>=<span class="string">&quot;3&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>py_pubsub<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">description</span>&gt;</span>Examples of minimal publisher/subscriber using rclpy<span class="tag">&lt;/<span class="name">description</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">maintainer</span> <span class="attr">email</span>=<span class="string">&quot;dengrong.guan@lotuscars.com.cn&quot;</span>&gt;</span>dengrong.guan<span class="tag">&lt;/<span class="name">maintainer</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">license</span>&gt;</span>Apache License 2.0<span class="tag">&lt;/<span class="name">license</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>ament_copyright<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>ament_flake8<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>ament_pep257<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">test_depend</span>&gt;</span>python3-pytest<span class="tag">&lt;/<span class="name">test_depend</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">export</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">build_type</span>&gt;</span>ament_python<span class="tag">&lt;/<span class="name">build_type</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">export</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">exec_depend</span>&gt;</span>rclpy<span class="tag">&lt;/<span class="name">exec_depend</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">exec_depend</span>&gt;</span>std_msgs<span class="tag">&lt;/<span class="name">exec_depend</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">package</span>&gt;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="setup-py"><a href="#setup-py" class="headerlink" title="setup.py"></a>setup.py</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> setuptools <span class="keyword">import</span> find_packages, setup</span><br><span class="line"></span><br><span class="line">package_name = <span class="string">&#x27;py_pubsub&#x27;</span></span><br><span class="line"></span><br><span class="line">setup(</span><br><span class="line">    name=package_name,</span><br><span class="line">    version=<span class="string">&#x27;0.0.0&#x27;</span>,</span><br><span class="line">    packages=find_packages(exclude=[<span class="string">&#x27;test&#x27;</span>]),</span><br><span class="line">    data_files=[</span><br><span class="line">        (<span class="string">&#x27;share/ament_index/resource_index/packages&#x27;</span>,</span><br><span class="line">            [<span class="string">&#x27;resource/&#x27;</span> + package_name]),</span><br><span class="line">        (<span class="string">&#x27;share/&#x27;</span> + package_name, [<span class="string">&#x27;package.xml&#x27;</span>]),</span><br><span class="line">    ],</span><br><span class="line">    install_requires=[<span class="string">&#x27;setuptools&#x27;</span>],</span><br><span class="line">    zip_safe=<span class="literal">True</span>,</span><br><span class="line">    maintainer=<span class="string">&#x27;dengrong.guan&#x27;</span>,</span><br><span class="line">    maintainer_email=<span class="string">&#x27;dengrong.guan@lotuscars.com.cn&#x27;</span>,</span><br><span class="line">    description=<span class="string">&#x27;Examples of minimal publisher/subscriber using rclpy&#x27;</span>,</span><br><span class="line">    license=<span class="string">&#x27;Apache License 2.0&#x27;</span>,</span><br><span class="line">    tests_require=[<span class="string">&#x27;pytest&#x27;</span>],</span><br><span class="line">    entry_points=&#123;</span><br><span class="line">        <span class="string">&#x27;console_scripts&#x27;</span>: [</span><br><span class="line">                <span class="string">&#x27;talker = py_pubsub.publisher_member_function:main&#x27;</span>,</span><br><span class="line">                <span class="string">&#x27;listener = py_pubsub.subscriber_member_function:main&#x27;</span>,</span><br><span class="line">        ],</span><br><span class="line">    &#125;,</span><br><span class="line">)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="Build-1"><a href="#Build-1" class="headerlink" title="Build"></a>Build</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~/workspace</span><br><span class="line">colcon build --packages-select py_pubsub</span><br></pre></td></tr></table></figure>
+
+<h3 id="运行验证"><a href="#运行验证" class="headerlink" title="运行验证"></a>运行验证</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ros2 run py_pubsub talker</span><br><span class="line">ros2 run py_pubsub listener</span><br></pre></td></tr></table></figure>
+
+<h2 id="录包"><a href="#录包" class="headerlink" title="录包"></a>录包</h2><h3 id="MCAP-推荐"><a href="#MCAP-推荐" class="headerlink" title="MCAP(推荐)"></a>MCAP(推荐)</h3><ul>
+<li><p><strong>现代化设计</strong>：专为时序数据优化的容器格式</p>
+</li>
+<li><p><strong>性能优势</strong>：&#x20;</p>
+<ul>
+<li><p>更快的写入速度</p>
+</li>
+<li><p>更好的压缩效果</p>
+</li>
+<li><p>支持索引和随机访问</p>
+</li>
+</ul>
+</li>
+<li><p><strong>跨平台</strong>：不依赖SQLite，更好的可移植性</p>
+</li>
+<li><p><strong>元数据丰富</strong>：支持更详细的数据描述</p>
+</li>
+<li><p><strong>工具生态</strong>：有专门的MCAP工具链支持</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 bag record -s mcap -o my_bag6 --max-bag-duration 10  -a</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2025/06/12/record/ros2_startup/%E6%88%AA%E5%B1%8F2025-06-05%2014.20.41.png"></p>
+<h3 id="DB3"><a href="#DB3" class="headerlink" title="DB3"></a>DB3</h3><ul>
+<li><p><strong>默认格式</strong>：ROS2的标准bag格式，基于SQLite数据库</p>
+</li>
+<li><p><strong>兼容性好</strong>：与ROS2工具链完全兼容</p>
+</li>
+<li><p><strong>简单易用</strong>：直接支持所有ros2 bag命令</p>
+</li>
+<li><p><strong>适合场景</strong>：常规的机器人数据记录和回放</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ros2 bag record -o my_bag --max-bag-duration 10  -a</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2025/06/12/record/ros2_startup/%E6%88%AA%E5%B1%8F2025-06-05%2014.18.10.png"></p>
+<h2 id="解包"><a href="#解包" class="headerlink" title="解包"></a>解包</h2><h3 id="mcap格式"><a href="#mcap格式" class="headerlink" title="mcap格式"></a>mcap格式</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install mcap-ros2-support</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mcap_ros2.decoder <span class="keyword">import</span> DecoderFactory</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mcap.reader <span class="keyword">import</span> make_reader</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(sys.argv[<span class="number">1</span>], <span class="string">&quot;rb&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        reader = make_reader(f, decoder_factories=[DecoderFactory()])</span><br><span class="line">        <span class="keyword">for</span> schema, channel, message, ros_msg <span class="keyword">in</span> reader.iter_decoded_messages():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;channel.topic&#125;</span> <span class="subst">&#123;schema.name&#125;</span> [<span class="subst">&#123;message.log_time&#125;</span>]: <span class="subst">&#123;ros_msg&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="多节点通信"><a href="#多节点通信" class="headerlink" title="多节点通信"></a>多节点通信</h2><ol>
+<li>使用ROS_DOMAIN_ID</li>
+</ol>
+<p>在所有机器上设置相同的域ID：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export ROS_DOMAIN_ID=42  # 0-255之间的数字</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>配置DDS发现</li>
+</ul>
+<p>使用ROS_LOCALHOST_ONLY</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在所有机器上禁用localhost限制</span> </span><br><span class="line">export ROS_LOCALHOST_ONLY=0</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>参考：<a target="_blank" rel="noopener" href="https://docs.ros.org/en/crystal/Tutorials/Understanding-ROS2-Nodes.html">https://docs.ros.org/en/crystal/Tutorials/Understanding-ROS2-Nodes.html</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/" title="ROS2 从入门到放弃">https://galaxyguan12.github.io/2025/06/12/record/ros2_startup/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/ROS2/" rel="tag"># ROS2</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/05/29/ml/llm/llm_in_action1/" rel="prev" title="大模型应用实战（1）-基本概念">
+                  <i class="fa fa-angle-left"></i> 大模型应用实战（1）-基本概念
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

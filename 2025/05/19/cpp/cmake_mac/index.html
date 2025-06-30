@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="背景使用C++编写的一个小项目，需要打包成mac下的可执行文件（免安装版本），方便分发给其他mac执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++ Mac 打包运行方案（cmake）">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="背景使用C++编写的一个小项目，需要打包成mac下的可执行文件（免安装版本），方便分发给其他mac执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/image.png">
+<meta property="article:published_time" content="2025-05-19T11:39:34.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.887Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="cmake">
+<meta property="article:tag" content="Mac">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/image.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/","path":"2025/05/19/cpp/cmake_mac/","title":"C++ Mac 打包运行方案（cmake）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++ Mac 打包运行方案（cmake） | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E6%A2%B3%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">动态库梳理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%93%E5%8C%85%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">打包方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E5%BA%93%E5%A4%84%E7%90%86"><span class="nav-number">3.1.</span> <span class="nav-text">静态库处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E5%A4%84%E7%90%86-PCL%E5%BA%93"><span class="nav-number">3.2.</span> <span class="nav-text">动态库处理(PCL库)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5"><span class="nav-number">3.3.</span> <span class="nav-text">编译链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E5%90%8E%E5%A4%84%E7%90%86%E9%80%BB%E8%BE%91"><span class="nav-number">3.4.</span> <span class="nav-text">动态库后处理逻辑</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%B9%E9%87%8F%E4%BF%A1%E4%BB%BB"><span class="nav-number">4.</span> <span class="nav-text">批量信任</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++ Mac 打包运行方案（cmake） | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++ Mac 打包运行方案（cmake）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-05-19 19:39:34" itemprop="dateCreated datePublished" datetime="2025-05-19T19:39:34+08:00">2025-05-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>使用C++编写的一个小项目，需要打包成mac下的可执行文件（免安装版本），方便分发给其他mac执行，需要把项目的动态库都打在软件包中，分发之后可以直接运行，而不需要再重复安装。</p>
+<span id="more"></span>
+
+
+<h1 id="动态库梳理"><a href="#动态库梳理" class="headerlink" title="动态库梳理"></a>动态库梳理</h1><p>经过依赖精简和梳理，项目最终必须依赖的动态库包括：pcl, bzip2, lz4, yaml, rosbag(用于读取rosbag包,后续会有专门的文章会提到如何做到不依赖ros环境)。 在Mac上，这些动态库都已经通过<code>homebrew</code>工具安装好。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install cmake bzip2 lz4 pcl</span><br></pre></td></tr></table></figure>
+
+<p>brew 在安装<code>bzip2</code>和 <code>lz4</code> 时，也会默认安装他们的静态库文件（<code>liblz4.a</code> 和 <code>libbz2.a</code>），而pcl库是直接安装的动态库文件。</p>
+<h1 id="打包方案"><a href="#打包方案" class="headerlink" title="打包方案"></a>打包方案</h1><p>yaml动态库在前面的文章中已经转成了静态库代码的形式包含在了项目里。对于动态库，和linux类似，需要把动态库（dylib）直接打包到存放可执行文件的目录中。不过，不同于linux，mac上需要处理动态库自身的动态库依赖。</p>
+<p>由于我们使用<code>homebrew</code>安装依赖库，所以我们在编译时（CMakeLists.txt）中需要在brew的安装路径下查找定位依赖库。</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Homebrew 安装路径</span></span><br><span class="line"><span class="keyword">set</span>(HOMEBREW_PREFIX <span class="string">&quot;/usr/local/opt&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="静态库处理"><a href="#静态库处理" class="headerlink" title="静态库处理"></a>静态库处理</h2><p>对于<code>bzip2</code>和 <code>lz4</code>，我们在编译的时候直接依赖他们的静态库文件，这样比较方便。</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># lz4, bzip2 静态库路径</span></span><br><span class="line"><span class="keyword">set</span>(LZ4_LIBRARY <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/lz4/lib/liblz4.a&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(BZIP2_LIBRARIES <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/bzip2/lib/libbz2.a&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">find_package</span>(BZip2 REQUIRED)</span><br><span class="line"><span class="comment"># 显式指定 BZip2 静态库（覆盖默认动态库）</span></span><br><span class="line"><span class="keyword">if</span>(BZIP2_FOUND)</span><br><span class="line">    <span class="keyword">set</span>(BZIP2_LIBRARIES <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/bzip2/lib/libbz2.a&quot;</span>)</span><br><span class="line">    <span class="keyword">message</span>(STATUS <span class="string">&quot;BZip2 static lib: $&#123;BZIP2_LIBRARIES&#125;&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定位 lz4 静态库</span></span><br><span class="line"><span class="keyword">find_library</span>(LZ4_LIBRARY_RELEASE NAMES liblz4.a PATHS <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/lz4/lib&quot;</span> REQUIRED)</span><br><span class="line"><span class="keyword">find_library</span>(LZ4_LIBRARY_DEBUG NAMES liblz4d.a PATHS <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/lz4/lib&quot;</span>)</span><br><span class="line"><span class="keyword">if</span>(LZ4_LIBRARY_RELEASE)</span><br><span class="line">    <span class="keyword">set</span>(LZ4_LIBRARIES <span class="variable">$&#123;LZ4_LIBRARY_RELEASE&#125;</span>)</span><br><span class="line">    <span class="keyword">if</span>(LZ4_LIBRARY_DEBUG)</span><br><span class="line">        <span class="keyword">set</span>(LZ4_LIBRARIES optimized <span class="variable">$&#123;LZ4_LIBRARY_RELEASE&#125;</span> debug <span class="variable">$&#123;LZ4_LIBRARY_DEBUG&#125;</span>)</span><br><span class="line">    <span class="keyword">endif</span>()</span><br><span class="line">    <span class="keyword">message</span>(STATUS <span class="string">&quot;lz4 static lib found: $&#123;LZ4_LIBRARIES&#125;&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
+
+<h2 id="动态库处理-PCL库"><a href="#动态库处理-PCL库" class="headerlink" title="动态库处理(PCL库)"></a>动态库处理(PCL库)</h2><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># PCL 动态库路径</span></span><br><span class="line"><span class="keyword">set</span>(PCL_DIR <span class="string">&quot;$&#123;HOMEBREW_PREFIX&#125;/pcl/lib/cmake/pcl&quot;</span>)  </span><br><span class="line"><span class="keyword">list</span>(APPEND CMAKE_PREFIX_PATH <span class="string">&quot;$&#123;PCL_DIR&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># macOS 动态库运行时搜索路径设置</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_INSTALL_RPATH <span class="string">&quot;@executable_path&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_WITH_INSTALL_RPATH <span class="keyword">TRUE</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 框架链接（PCL 可能需要的系统框架）</span></span><br><span class="line"><span class="keyword">link_libraries</span>(<span class="string">&quot;-framework Accelerate&quot;</span> <span class="string">&quot;-framework OpenGL&quot;</span> <span class="string">&quot;-framework Foundation&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">find_package</span>(PCL REQUIRED COMPONENTS io)</span><br><span class="line"><span class="keyword">if</span>(PCL_FOUND)</span><br><span class="line">    <span class="keyword">message</span>(STATUS <span class="string">&quot;PCL Found: $&#123;PCL_LIBRARIES&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">include_directories</span>(<span class="variable">$&#123;PCL_INCLUDE_DIRS&#125;</span>)</span><br><span class="line"><span class="keyword">else</span>()</span><br><span class="line">    <span class="keyword">message</span>(FATAL_ERROR <span class="string">&quot;PCL not found!&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译链接"><a href="#编译链接" class="headerlink" title="编译链接"></a>编译链接</h2><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">add_executable</span>(MyApp ...)</span><br><span class="line"></span><br><span class="line"><span class="keyword">target_include_directories</span>(MyApp PUBLIC </span><br><span class="line">  <span class="variable">$&#123;PCL_INCLUDE_DIRS&#125;</span></span><br><span class="line">  <span class="variable">$&#123;CMAKE_SOURCE_DIR&#125;</span>/thirdparty/yaml-cpp/<span class="keyword">include</span></span><br><span class="line">  ...</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 链接配置：PCL动态库 + 其他静态库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(MyApp PUBLIC </span><br><span class="line">  <span class="variable">$&#123;PCL_LIBRARIES&#125;</span>       <span class="comment"># PCL动态库</span></span><br><span class="line">  yaml-cpp               <span class="comment"># 静态源码编译的yaml-cpp</span></span><br><span class="line">  <span class="variable">$&#123;BZIP2_LIBRARIES&#125;</span>     <span class="comment"># BZip2静态库</span></span><br><span class="line">  <span class="variable">$&#123;LZ4_LIBRARIES&#125;</span>       <span class="comment"># lz4静态库</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="动态库后处理逻辑"><a href="#动态库后处理逻辑" class="headerlink" title="动态库后处理逻辑"></a>动态库后处理逻辑</h2><p>首先，可以使用 <code>otool -L </code>提取依赖的动态库，不管是App还是动态库本身，都可以用这个命令来定位到他们的依赖。这里和linux不同的地方在于，需要<code>递归</code>去处理动态库及动态库自身的依赖。针对以下两种情况分别处理：</p>
+<ol>
+<li><p>动态库路径中包含 <code>/usr/local</code> ：直接复制对应地址的动态库到目标路径的libs下（<code>dist/libs/</code>）</p>
+</li>
+<li><p>动态库路径中包含 <code>@rpath</code>：这种情况比较麻烦，因为根据<code>@rpath</code>并不能定位到动态库的路径，需要根据动态库类型替换<code>@rpath</code>为实际的动态库路径：</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> | grep -q <span class="string">&quot;vtk&quot;</span>; <span class="keyword">then</span></span><br><span class="line">  replaced_str=<span class="variable">$&#123;dep//@rpath//usr/local/opt/vtk/lib&#125;</span></span><br><span class="line">  <span class="built_in">echo</span> <span class="variable">$replaced_str</span></span><br><span class="line">  <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$replaced_str</span>&quot;</span> dist/libs/</span><br></pre></td></tr></table></figure>
+
+<p>把动态库拷贝到目标路径后，就可以递归调用相同的方法，定位拷贝动态库自身的依赖。从递归返回之后，就可以修改当前动态库依赖的路径为新的目标路径，即<code>dist/libs/</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">new_dep_path=<span class="string">&quot;@executable_path/../libs/<span class="variable">$dep_name</span>&quot;</span></span><br><span class="line">install_name_tool -change <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> <span class="string">&quot;<span class="variable">$new_dep_path</span>&quot;</span> <span class="string">&quot;<span class="variable">$lib</span>&quot;</span> </span><br></pre></td></tr></table></figure>
+
+<p>完整脚本如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="built_in">set</span> -e</span><br><span class="line"></span><br><span class="line"><span class="built_in">rm</span> -rf build &amp;&amp; <span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build</span><br><span class="line">cmake .. -DBP_USE_PCL=ON</span><br><span class="line">make -j$(<span class="built_in">nproc</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">process_deps</span></span>() &#123;</span><br><span class="line">  <span class="built_in">local</span> lib=<span class="variable">$1</span></span><br><span class="line">  <span class="built_in">echo</span> <span class="string">&quot;process lib <span class="variable">$1</span>&quot;</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># 提取当前库的依赖项</span></span><br><span class="line">  otool -L <span class="string">&quot;<span class="variable">$lib</span>&quot;</span> | </span><br><span class="line">    awk <span class="string">&#x27;NR&gt;1 &amp;&amp; /^\t/ &#123;print $1&#125;&#x27;</span> | </span><br><span class="line">    grep -E <span class="string">&quot;/usr/local|@rpath&quot;</span> |</span><br><span class="line">    <span class="keyword">while</span> <span class="built_in">read</span> dep; <span class="keyword">do</span></span><br><span class="line">      <span class="comment"># 复制依赖库到 libs/（如果尚未存在）</span></span><br><span class="line">      dep_name=$(<span class="built_in">basename</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span>)</span><br><span class="line">      <span class="keyword">if</span> [ ! -f <span class="string">&quot;dist/libs/<span class="variable">$dep_name</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> | grep -q <span class="string">&quot;vtk&quot;</span>; <span class="keyword">then</span></span><br><span class="line">          replaced_str=<span class="variable">$&#123;dep//@rpath//usr/local/opt/vtk/lib&#125;</span></span><br><span class="line">          <span class="built_in">echo</span> <span class="variable">$replaced_str</span></span><br><span class="line">          <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$replaced_str</span>&quot;</span> dist/libs/</span><br><span class="line">        <span class="keyword">elif</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> | grep -q <span class="string">&quot;Qt&quot;</span>; <span class="keyword">then</span></span><br><span class="line">          replaced_str=<span class="variable">$&#123;dep//@rpath//usr/local/opt/qt/lib/&#125;</span></span><br><span class="line">          <span class="built_in">echo</span> <span class="variable">$replaced_str</span></span><br><span class="line">          <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$replaced_str</span>&quot;</span> dist/libs/</span><br><span class="line">        <span class="keyword">elif</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> | grep -q <span class="string">&quot;pcl&quot;</span>; <span class="keyword">then</span></span><br><span class="line">          replaced_str=<span class="variable">$&#123;dep//@rpath//usr/local/opt/pcl/lib/&#125;</span></span><br><span class="line">          <span class="built_in">echo</span> <span class="variable">$replaced_str</span></span><br><span class="line">          <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$replaced_str</span>&quot;</span> dist/libs/</span><br><span class="line">        <span class="keyword">elif</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> | grep -q <span class="string">&quot;boost&quot;</span>; <span class="keyword">then</span></span><br><span class="line">          replaced_str=<span class="variable">$&#123;dep//@rpath//usr/local/opt/boost/lib/&#125;</span></span><br><span class="line">          <span class="built_in">echo</span> <span class="variable">$replaced_str</span></span><br><span class="line">          <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$replaced_str</span>&quot;</span> dist/libs/</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">          <span class="built_in">cp</span> -L <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> dist/libs/</span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">        <span class="built_in">chmod</span> +w dist/libs/<span class="string">&quot;<span class="variable">$dep_name</span>&quot;</span>  <span class="comment"># 确保可修改权限</span></span><br><span class="line">        process_deps <span class="string">&quot;dist/libs/<span class="variable">$dep_name</span>&quot;</span>  <span class="comment"># 递归处理</span></span><br><span class="line">      <span class="keyword">fi</span></span><br><span class="line">      <span class="comment"># 修改当前库的依赖路径</span></span><br><span class="line">      new_dep_path=<span class="string">&quot;@executable_path/../libs/<span class="variable">$dep_name</span>&quot;</span></span><br><span class="line">      install_name_tool -change <span class="string">&quot;<span class="variable">$dep</span>&quot;</span> <span class="string">&quot;<span class="variable">$new_dep_path</span>&quot;</span> <span class="string">&quot;<span class="variable">$lib</span>&quot;</span> </span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 初始化目录</span></span><br><span class="line"><span class="built_in">rm</span> -rf dist</span><br><span class="line"><span class="built_in">mkdir</span> -p dist/&#123;libs,bin&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 拷贝可执行文件</span></span><br><span class="line"><span class="built_in">cp</span> MyApp dist/bin/</span><br><span class="line"><span class="built_in">cp</span> ../mac-prepare.sh dist/</span><br><span class="line"><span class="built_in">chmod</span> +x dist/mac-prepare.sh</span><br><span class="line">APP_PATH=<span class="string">&quot;dist/bin/MyApp&quot;</span></span><br><span class="line">process_deps <span class="string">&quot;<span class="variable">$APP_PATH</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Bundle created in dist/&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="批量信任"><a href="#批量信任" class="headerlink" title="批量信任"></a>批量信任</h1><p>迁移到其他mac上执行时，会提示不可信任的开发者，而且不只是可执行文件会提示，每个动态库都会提示，人工处理显然处理不过来。</p>
+<p><img src="/2025/05/19/cpp/cmake_mac/image.png"></p>
+<p>所以，我们要在目标mac上先进行批量信任才能正常运行该可执行文件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="built_in">set</span> -e</span><br><span class="line"></span><br><span class="line"><span class="comment"># 目标机器上执行</span></span><br><span class="line">BIN_DIR=<span class="string">&quot;./bin&quot;</span></span><br><span class="line">LIB_DIR=<span class="string">&quot;./libs&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># # 步骤1：递归移除所有隔离属性</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[1/3] Removing quarantine attributes...&quot;</span></span><br><span class="line">xattr -dr com.apple.quarantine <span class="string">&quot;<span class="variable">$BIN_DIR</span>&quot;</span></span><br><span class="line">xattr -dr com.apple.quarantine <span class="string">&quot;<span class="variable">$LIB_DIR</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># # 步骤2：递归重新签名</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[2/3] Re-signing binaries and libraries...&quot;</span></span><br><span class="line">find <span class="string">&quot;<span class="variable">$LIB_DIR</span>&quot;</span> \</span><br><span class="line">  -<span class="built_in">type</span> f \( -name <span class="string">&quot;*.dylib&quot;</span> -o -name <span class="string">&quot;*.so&quot;</span> -o -perm +111 \) \</span><br><span class="line">  -<span class="built_in">exec</span> codesign --force --sign - &#123;&#125; \; 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/" title="C++ Mac 打包运行方案（cmake）">https://galaxyguan12.github.io/2025/05/19/cpp/cmake_mac/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/cmake/" rel="tag"># cmake</a>
+              <a href="/tags/Mac/" rel="tag"># Mac</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/05/13/cpp/cmake_linux/" rel="prev" title="C++ linux打包运行方案（cmake）">
+                  <i class="fa fa-angle-left"></i> C++ linux打包运行方案（cmake）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/05/21/ml/llm/rag1/" rel="next" title="RAG全流程解析">
+                  RAG全流程解析 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

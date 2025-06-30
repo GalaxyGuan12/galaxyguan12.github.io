@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
@@ -17,11 +18,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
 
     <meta name="description" content="前言反向传播(Backpropagation) 是神经网络中重要且难以理解的概念之一，甚至可以说如果理解了反向传播的工作机制，你就基本理解了神经网络的工作原理。所以我们从“反向传播”切入，由此揭开神经网络的神秘面纱。学习完之后你会发现，反向传播只是一个非常简单的过程，它告诉我们在神经网络中需要怎么改变参数。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入浅出反向传播(1)">
+<meta property="og:title" content="深入浅出反向传播（1）">
 <meta property="og:url" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/index.html">
 <meta property="og:site_name" content="递归书房">
 <meta property="og:description" content="前言反向传播(Backpropagation) 是神经网络中重要且难以理解的概念之一，甚至可以说如果理解了反向传播的工作机制，你就基本理解了神经网络的工作原理。所以我们从“反向传播”切入，由此揭开神经网络的神秘面纱。学习完之后你会发现，反向传播只是一个非常简单的过程，它告诉我们在神经网络中需要怎么改变参数。">
@@ -51,7 +52,7 @@
 <meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/79878352d4844f2f93f582c3f920b236.png">
 <meta property="og:image" content="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/022f8ab4da384e52aedf8bf54766de75.png">
 <meta property="article:published_time" content="2024-06-27T00:30:53.000Z">
-<meta property="article:modified_time" content="2025-06-27T02:30:56.116Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:13.009Z">
 <meta property="article:author" content="GalaxyGuan">
 <meta property="article:tag" content="反向传播">
 <meta name="twitter:card" content="summary">
@@ -61,10 +62,10 @@
 <link rel="canonical" href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/","path":"2024/06/27/ml/nn/backpropagation1/","title":"深入浅出反向传播(1)"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/","path":"2024/06/27/ml/nn/backpropagation1/","title":"深入浅出反向传播（1）"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>深入浅出反向传播(1) | 递归书房</title>
+<title>深入浅出反向传播（1） | 递归书房</title>
   
 
 
@@ -169,24 +170,24 @@
     <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
       src="/images/avatar.jpg">
   <p class="site-author-name" itemprop="name">GalaxyGuan</p>
-  <div class="site-description" itemprop="description">用碎片化时间学习系统化知识，用递归深入问题本质</div>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
 </div>
 <div class="site-state-wrap animated">
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">17</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -206,6 +207,9 @@
       </span>
       <span class="links-of-author-item">
         <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
       </span>
   </div>
   <div class="cc-license animated" itemprop="license">
@@ -242,16 +246,16 @@
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="递归书房">
-      <meta itemprop="description" content="用碎片化时间学习系统化知识，用递归深入问题本质">
+      <meta itemprop="description" content="用递归追溯问题本质">
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="深入浅出反向传播(1) | 递归书房">
+      <meta itemprop="name" content="深入浅出反向传播（1） | 递归书房">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          深入浅出反向传播(1)
+          深入浅出反向传播（1）
         </h1>
 
         <div class="post-meta-container">
@@ -371,7 +375,7 @@
   </li>
   <li class="post-copyright-link">
       <strong>Post link: </strong>
-      <a href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/" title="深入浅出反向传播(1)">https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/</a>
+      <a href="https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/" title="深入浅出反向传播（1）">https://galaxyguan12.github.io/2024/06/27/ml/nn/backpropagation1/</a>
   </li>
   <li class="post-copyright-license">
       <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -387,6 +391,9 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
+                <a href="/2024/03/08/architecture/design_pattern/design_pattern3/" rel="prev" title="设计模式之行为型模式">
+                  <i class="fa fa-angle-left"></i> 设计模式之行为型模式
+                </a>
             </div>
             <div class="post-nav-item">
                 <a href="/2024/06/27/ml/nn/backpropagation2/" rel="next" title="深入浅出反向传播（2）">

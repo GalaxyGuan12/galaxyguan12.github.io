@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="序最近需要使用ffmpeg实时解码h264视频帧，转换成单帧的图片供前端直接可视化。在使用过程中发现前端显示的图像一直有1-2s的延迟。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次ffmpeg延迟问题排查">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="序最近需要使用ffmpeg实时解码h264视频帧，转换成单帧的图片供前端直接可视化。在使用过程中发现前端显示的图像一直有1-2s的延迟。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen-3.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen-1.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen-4.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen-2.png">
+<meta property="article:published_time" content="2025-03-25T13:04:38.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:13.010Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="ffmpeg">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/screen-3.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/","path":"2025/03/25/record/ffmpeg_debug/","title":"记一次ffmpeg延迟问题排查"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>记一次ffmpeg延迟问题排查 | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E4%BB%A3%E7%A0%81"><span class="nav-number">1.1.</span> <span class="nav-text">问题代码</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%A9%E5%B0%8F%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4"><span class="nav-number">2.</span> <span class="nav-text">缩小问题范围</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E8%B7%AF%E8%80%97%E6%97%B6"><span class="nav-number">2.1.</span> <span class="nav-text">链路耗时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Ffmpeg-%E8%80%97%E6%97%B6"><span class="nav-number">2.2.</span> <span class="nav-text">Ffmpeg 耗时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%A4%8D%E7%8E%B0"><span class="nav-number">2.3.</span> <span class="nav-text">问题复现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Probesize"><span class="nav-number">2.4.</span> <span class="nav-text">Probesize</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AB%E4%B9%89"><span class="nav-number">2.4.1.</span> <span class="nav-text">含义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%9C%E7%94%A8"><span class="nav-number">2.4.2.</span> <span class="nav-text">作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">2.4.3.</span> <span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%9D%E8%AF%95%E8%A7%A3%E5%86%B3"><span class="nav-number">2.5.</span> <span class="nav-text">尝试解决</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#H-264-%E8%A7%86%E9%A2%91%E5%B8%A7%E6%8A%80%E6%9C%AF%E7%AE%80%E4%BB%8B"><span class="nav-number">2.6.</span> <span class="nav-text">H.264 视频帧技术简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-H-264-%E8%A7%86%E9%A2%91%E5%B8%A7%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.6.1.</span> <span class="nav-text">1. H.264 视频帧类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-I-%E5%B8%A7%EF%BC%88Intra-Frame-Key-Frame%EF%BC%89"><span class="nav-number">2.6.1.1.</span> <span class="nav-text">(1) I 帧（Intra Frame &#x2F; Key Frame）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-P-%E5%B8%A7%EF%BC%88Predictive-Frame%EF%BC%89"><span class="nav-number">2.6.1.2.</span> <span class="nav-text">(2) P 帧（Predictive Frame）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-B-%E5%B8%A7%EF%BC%88Bi-directional-Frame%EF%BC%89"><span class="nav-number">2.6.1.3.</span> <span class="nav-text">(3) B 帧（Bi-directional Frame）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%85%B8%E5%9E%8BH-264%E7%A0%81%E6%B5%81%E7%BB%93%E6%9E%84"><span class="nav-number">2.6.2.</span> <span class="nav-text">2. 典型H.264码流结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%881%EF%BC%9A-%E5%87%8F%E5%B0%91%E7%BA%BF%E7%A8%8B%E6%95%B0"><span class="nav-number">2.7.</span> <span class="nav-text">解决方案1： 减少线程数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%882%EF%BC%9A-%E6%8C%87%E5%AE%9A%E6%88%90%E5%88%87%E7%89%87%E7%BA%A7%E5%A4%9A%E7%BA%BF%E7%A8%8B"><span class="nav-number">2.8.</span> <span class="nav-text">解决方案2： 指定成切片级多线程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C"><span class="nav-number">2.9.</span> <span class="nav-text">效果</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="记一次ffmpeg延迟问题排查 | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          记一次ffmpeg延迟问题排查
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-03-25 21:04:38" itemprop="dateCreated datePublished" datetime="2025-03-25T21:04:38+08:00">2025-03-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%97%A5%E5%B8%B8%E8%AE%B0%E5%BD%95/" itemprop="url" rel="index"><span itemprop="name">日常记录</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="序"><a href="#序" class="headerlink" title="序"></a>序</h1><p>最近需要使用ffmpeg实时解码h264视频帧，转换成单帧的图片供前端直接可视化。在使用过程中发现前端显示的图像一直有1-2s的延迟。</p>
+<span id="more"></span>
+
+
+<h2 id="问题代码"><a href="#问题代码" class="headerlink" title="问题代码"></a>问题代码</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">self</span>.processes[topic] = subprocess.Popen([<span class="string">&#x27;ffmpeg&#x27;</span>, <span class="string">&#x27;-i&#x27;</span>, <span class="string">&#x27;pipe:0&#x27;</span>, <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;rawvideo&#x27;</span>, <span class="string">&#x27;-pix_fmt&#x27;</span>, <span class="string">&#x27;bgr24&#x27;</span>, <span class="string">&#x27;-s&#x27;</span>, <span class="string">&#x27;320x180&#x27;</span>, <span class="string">&#x27;pipe:1&#x27;</span>],stdin=subprocess.PIPE, stdout=subprocess.PIPE)</span><br><span class="line"><span class="comment"># ...</span></span><br><span class="line"><span class="variable language_">self</span>.processes[topic].stdin.write(msg.data)</span><br><span class="line"><span class="variable language_">self</span>.processes[topic].stdin.flush()</span><br><span class="line"><span class="comment"># ...</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_frame</span>(<span class="params">self, topic</span>):</span><br><span class="line">    <span class="variable language_">self</span>.frames[topic] = <span class="literal">None</span></span><br><span class="line">    <span class="comment"># 过滤没消息发出的topic</span></span><br><span class="line">    rlist, _, _ = select.select([<span class="variable language_">self</span>.processes[topic].stdout], [], [], <span class="number">0.01</span>)</span><br><span class="line">    <span class="keyword">if</span> rlist:</span><br><span class="line">        raw_frame = <span class="variable language_">self</span>.processes[topic].stdout.read(<span class="number">320</span> * <span class="number">180</span> * <span class="number">3</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment"># logger.info(f&quot;&#123;topic&#125; no messages&quot;)</span></span><br><span class="line">        raw_frame = <span class="literal">None</span></span><br><span class="line">    <span class="keyword">if</span> raw_frame:</span><br><span class="line">        <span class="variable language_">self</span>.frames[topic] = np.frombuffer(raw_frame, np.uint8).reshape((<span class="number">180</span>, <span class="number">320</span>, <span class="number">3</span>))</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">self</span>.frames[topic]</span><br></pre></td></tr></table></figure>
+
+<h1 id="缩小问题范围"><a href="#缩小问题范围" class="headerlink" title="缩小问题范围"></a>缩小问题范围</h1><h2 id="链路耗时"><a href="#链路耗时" class="headerlink" title="链路耗时"></a>链路耗时</h2><p>首先第一个怀疑点是链路耗时较长。通过打印链路上各个关键节点的时间，包括摄像头采集的时间、转码成h264视频帧并发出的时间、接收到h264视频帧的时间，统计结果显示从源头到输入ffmpeg管道之前耗时大约只有200ms左右，因此怀疑点瞬间变成了ffmpeg。</p>
+<h2 id="Ffmpeg-耗时"><a href="#Ffmpeg-耗时" class="headerlink" title="Ffmpeg 耗时"></a>Ffmpeg 耗时</h2><p>ffmpeg处理h264视频帧这么慢的吗？因为ffmpeg管道的输入输出耗时不太好统计，我们索性直接准备一堆h264文件，在本地使用ffmpeg命令批量转换看看。</p>
+<p><img src="/2025/03/25/record/ffmpeg_debug/screen-3.png"></p>
+<p>可以看到80帧的h264文件转成png图片只花了3.24秒，很明显ffmpeg处理的效率是很高的。</p>
+<p>结合实时的现象，从感觉上来看像是有图像数据堵塞在了ffmpeg管道中，因为我们实时处理时是支持暂停的，我们把摄像头数据暂停后，发现ffmpeg管道出来的最后一帧图片并不是实际摄像头暂停时的图像，这也能进一步验证我们的想法，即是不是有图像数据堵塞在了ffmpeg管道中，从而在肉眼看起来像是有延迟，而且延迟也不会累积，说明链路上的耗时是能满足要求的。</p>
+<p>由于实时渲染图像不方便调试，我们基于以上的思路，将实时处理搬运到本地，做离线处理看看是否能复现问题。</p>
+<h2 id="问题复现"><a href="#问题复现" class="headerlink" title="问题复现"></a>问题复现</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">h264_files = [f <span class="keyword">for</span> f <span class="keyword">in</span> os.listdir(H264_DIR) <span class="keyword">if</span> f.endswith(<span class="string">&#x27;.h264&#x27;</span>)]</span><br><span class="line">ffmpeg_cmd = [</span><br><span class="line">    <span class="string">&#x27;ffmpeg&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;h264&#x27;</span>, </span><br><span class="line">    <span class="string">&quot;-loglevel&quot;</span>, <span class="string">&quot;debug&quot;</span>,  <span class="comment"># 启用调试日志</span></span><br><span class="line">    <span class="string">&#x27;-i&#x27;</span>, <span class="string">&quot;pipe:0&quot;</span> , </span><br><span class="line">    <span class="string">&quot;-s&quot;</span>, <span class="string">&quot;320x180&quot;</span>,  </span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;image2&#x27;</span>, </span><br><span class="line">    os.path.join(IMAGE_DIR, <span class="string">&quot;frame_%04d.png&quot;</span>)</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">ffmpeg_process = subprocess.Popen(ffmpeg_cmd,stdin=subprocess.PIPE)</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    start_time = time.time()</span><br><span class="line">    <span class="keyword">for</span> idx, h264_file <span class="keyword">in</span> <span class="built_in">enumerate</span>(h264_files):</span><br><span class="line">        png_output = <span class="string">&#x27;frame_&#123;:04d&#125;.png&#x27;</span>.<span class="built_in">format</span>(idx + <span class="number">1</span>)</span><br><span class="line">        h264_path = os.path.join(H264_DIR, h264_file)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Processing file: <span class="subst">&#123;h264_file&#125;</span> save to <span class="subst">&#123;png_output&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(h264_path, <span class="string">&quot;rb&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">                data = f.read(<span class="number">1024</span> * <span class="number">1024</span>)  <span class="comment"># 读取1MB的数据块</span></span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">not</span> data:</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">                <span class="comment"># print(&quot;Writing data to ffmpeg process.&quot;)</span></span><br><span class="line">                ffmpeg_process.stdin.write(data)</span><br><span class="line">        time.sleep(<span class="number">1</span>)</span><br><span class="line"><span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Error processing file: <span class="subst">&#123;h264_file&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(e)</span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    <span class="comment"># 关闭FFmpeg进程</span></span><br><span class="line">    ffmpeg_process.stdin.close()</span><br><span class="line">    ffmpeg_process.wait()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Processing time: <span class="subst">&#123;time.time() - start_time&#125;</span>s&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Frames saved as PNG images.&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>通过打印日志，发现很容易能复现出来，而且问题更加严重，在ffmpeg已经积累了33帧左右h264文件时，image才输出保存到目录中。</p>
+<p><img src="/2025/03/25/record/ffmpeg_debug/screen.png"></p>
+<p>再分析分析日志, 好像发现了端倪：</p>
+<p><img src="/2025/03/25/record/ffmpeg_debug/screen-1.png"></p>
+<p>在输出图像之前，有这样一行日志打印，查阅资料看看这个 probesize是什么意思？</p>
+<h2 id="Probesize"><a href="#Probesize" class="headerlink" title="Probesize"></a>Probesize</h2><p><code>ffmpeg</code> 中的 <code>probesize</code> 参数用于控制**初始分析阶段**读取的数据量，以探测输入文件的基本信息（如格式、流数据等）。</p>
+<h3 id="含义"><a href="#含义" class="headerlink" title="含义"></a><strong>含义</strong></h3><ul>
+<li><p><strong><code>probesize</code></strong> 是一个数值参数，单位是**字节（bytes）**，默认值通常为 <code>5,000,000</code> 字节（约5MB）。</p>
+</li>
+<li><p>它定义了 <code>ffmpeg</code> 在开始处理输入文件时，最多读取多少数据来检测文件的容器格式、流信息（如视频、音频、字幕等）和其他元数据。</p>
+</li>
+</ul>
+<h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a><strong>作用</strong></h3><ol>
+<li><p><strong>加速分析过程</strong></p>
+<ul>
+<li><p>通过限制初始读取的数据量，避免 <code>ffmpeg</code> 无谓地扫描整个大文件（尤其是网络流或大型文件），从而加快分析速度。</p>
+</li>
+<li><p>例如，对于远程直播流，设置较小的 <code>probesize</code> 可以更快地进入实际处理阶段。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>处理不完整的文件或特殊格式</strong></p>
+<ul>
+<li><p>某些文件（如损坏的或未完全下载的媒体）可能包含无效的头部信息。调整 <code>probesize</code> 可以强制 <code>ffmpeg</code> 在更早或更晚的位置检测格式。</p>
+</li>
+<li><p>对于某些非标准格式（如无明确头部信息的流），可能需要增加 <code>probesize</code> 以确保正确识别。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>平衡准确性与性能</strong></p>
+<ul>
+<li><p>值过小可能导致分析失败（如无法识别格式或漏掉某些流）。</p>
+</li>
+<li><p>值过大会增加启动延迟（尤其对网络资源）。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a><strong>注意事项</strong></h3><ul>
+<li><p><strong>优先级</strong>：<code>probesize</code> 仅在初始阶段生效，不影响后续的实际解码或转码。</p>
+</li>
+<li><p><strong>与格式探测的关系</strong>：<code>ffmpeg</code> 可能需要在 <code>probesize</code> 范围内找到有效的格式头（如 <code>moov</code> 原子）。若失败，可尝试增大该值。</p>
+</li>
+<li><p><strong>极端情况</strong>：设为 <code>0</code> 会让 <code>ffmpeg</code> 使用默认值；设为极大值可能导致内存问题。</p>
+</li>
+</ul>
+<h2 id="尝试解决"><a href="#尝试解决" class="headerlink" title="尝试解决"></a>尝试解决</h2><p>知道了probesize的含义，我们尝试把这个值设为一个较小的数字，让ffmpeg尽快去实际地处理h264数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg_cmd = [</span><br><span class="line">    <span class="string">&#x27;ffmpeg&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;h264&#x27;</span>, </span><br><span class="line">    <span class="string">&quot;-probesize&quot;</span>, <span class="string">&quot;32&quot;</span>,    <span class="comment"># 设置探测数据大小为 32 字节</span></span><br><span class="line">    <span class="string">&quot;-loglevel&quot;</span>, <span class="string">&quot;debug&quot;</span>,  <span class="comment"># 启用调试日志</span></span><br><span class="line">    <span class="string">&#x27;-i&#x27;</span>, <span class="string">&quot;pipe:0&quot;</span> , </span><br><span class="line">    <span class="string">&quot;-s&quot;</span>, <span class="string">&quot;320x180&quot;</span>,  </span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;image2&#x27;</span>, </span><br><span class="line">    os.path.join(IMAGE_DIR, <span class="string">&quot;frame_%04d.png&quot;</span>)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>有了一点效果，但是问题还是存在，处理到22帧左右才开始输出图片：</p>
+<p><img src="/2025/03/25/record/ffmpeg_debug/screen-4.png"></p>
+<p>为什么呢？</p>
+<p>这就要从h264图像压缩技术说起了。</p>
+<h2 id="H-264-视频帧技术简介"><a href="#H-264-视频帧技术简介" class="headerlink" title="H.264 视频帧技术简介"></a><strong>H.264 视频帧技术简介</strong></h2><p>H.264（也称为**AVC**，Advanced Video Coding）是一种广泛使用的视频压缩标准，能够以较低的码率提供高质量的流媒体和存储视频。它采用多种技术来减少视频数据的冗余性，从而提高压缩效率。</p>
+<h3 id="1-H-264-视频帧类型"><a href="#1-H-264-视频帧类型" class="headerlink" title="1. H.264 视频帧类型"></a><strong>1. H.264 视频帧类型</strong></h3><p>H.264 将视频帧分为三种主要类型，以适应不同的压缩需求：</p>
+<h4 id="1-I-帧（Intra-Frame-Key-Frame）"><a href="#1-I-帧（Intra-Frame-Key-Frame）" class="headerlink" title="(1) I 帧（Intra Frame &#x2F; Key Frame）"></a><strong>(1) I 帧（Intra Frame &#x2F; Key Frame）</strong></h4><ul>
+<li><p><strong>特点</strong>：</p>
+<ul>
+<li><p>不依赖其他帧，独立压缩（类似JPEG）。</p>
+</li>
+<li><p>占用存储空间较大，但解码无需参考其他帧。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>作用</strong>：</p>
+<ul>
+<li><p>作为视频的 “关键帧”，用于随机访问（如视频跳转）。</p>
+</li>
+<li><p>通常在 GOP（Group of Pictures）序列的起始位置出现。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-P-帧（Predictive-Frame）"><a href="#2-P-帧（Predictive-Frame）" class="headerlink" title="(2) P 帧（Predictive Frame）"></a><strong>(2) P 帧（Predictive Frame）</strong></h4><ul>
+<li><p><strong>特点</strong>：</p>
+<ul>
+<li><p>依赖前一帧（I帧或P帧）进行压缩，存储**运动补偿**和**变化信息**。</p>
+</li>
+<li><p>比I帧占用更少的比特率。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>作用</strong>：</p>
+<ul>
+<li><p>通过运动估计（Motion Estimation）减少时间冗余。</p>
+</li>
+<li><p>提高压缩率，但仍解码较快。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-B-帧（Bi-directional-Frame）"><a href="#3-B-帧（Bi-directional-Frame）" class="headerlink" title="(3) B 帧（Bi-directional Frame）"></a><strong>(3) B 帧（Bi-directional Frame）</strong></h4><ul>
+<li><p><strong>特点</strong>：</p>
+<ul>
+<li><p><strong>双向预测</strong>，依赖**前、后帧**（I或P帧）进行压缩。</p>
+</li>
+<li><p>压缩率最高，但解码复杂度更高（需缓存后向帧）。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>作用</strong>：</p>
+<ul>
+<li><p>进一步减少冗余，提高压缩效率。</p>
+</li>
+<li><p>常用于高质量编码（如蓝光电影）。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-典型H-264码流结构"><a href="#2-典型H-264码流结构" class="headerlink" title="2. 典型H.264码流结构"></a><strong>2. 典型H.264码流结构</strong></h3><ul>
+<li><p><strong>NAL（Network Abstraction Layer）</strong>：</p>
+<ul>
+<li><p>H.264按**NAL单元（NALU）** 组织数据，方便网络传输。</p>
+</li>
+<li><p>包含**SPS（序列参数集）、PPS（图像参数集）、I&#x2F;P&#x2F;B帧数据**。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>GOP（Group of Pictures）</strong>：</p>
+<ul>
+<li><p>一组连续帧（如 <code>I B B P B B P B B I</code>）。</p>
+</li>
+<li><p><code>Closed GOP</code>（无跨GOP参考） vs. <code>Open GOP</code>（允许B帧前向参考）。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>而ffmpeg为了加快处理速度，会采用多线程的方式来解码h264视频帧， 默认会使用<strong>帧级多线程</strong>（Frame-Based Multi-Threading），通过 <code>-threads</code> 参数控制。</p>
+<ul>
+<li><p>如果未显式设置 <code>-threads</code>，默认线程数通常为<strong>逻辑CPU核心数</strong>（但可能受编解码器内部限制）。</p>
+</li>
+<li><p>可通过 <code>-thread_type slice</code> 或 <code>-thread_type frame</code> 指定线程模式。</p>
+</li>
+</ul>
+<p>这样就会有问题，由于B帧&#x2F;P帧的依赖关系, H.264 的帧间压缩（尤其是B帧）需要参考前后帧，多线程解码时可能导致线程阻塞等待依赖帧。例如：某线程解码一个B帧需要等待后续P帧完成，但后续帧由另一线程处理，此时会阻塞。</p>
+<p>知道了问题原因，就有两种解决方案。</p>
+<h2 id="解决方案1：-减少线程数"><a href="#解决方案1：-减少线程数" class="headerlink" title="解决方案1： 减少线程数"></a>解决方案1： 减少线程数</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg_cmd = [</span><br><span class="line">    <span class="string">&#x27;ffmpeg&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;h264&#x27;</span>, </span><br><span class="line">    <span class="string">&quot;-probesize&quot;</span>, <span class="string">&quot;32&quot;</span>,    <span class="comment"># 设置探测数据大小为 32 字节</span></span><br><span class="line">    <span class="string">&quot;-threads&quot;</span>, <span class="string">&quot;1&quot;</span>,         <span class="comment"># 使用单线程</span></span><br><span class="line">    <span class="string">&quot;-loglevel&quot;</span>, <span class="string">&quot;debug&quot;</span>,  <span class="comment"># 启用调试日志</span></span><br><span class="line">    <span class="string">&#x27;-i&#x27;</span>, <span class="string">&quot;pipe:0&quot;</span> , </span><br><span class="line">    <span class="string">&quot;-s&quot;</span>, <span class="string">&quot;320x180&quot;</span>,  </span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;image2&#x27;</span>, </span><br><span class="line">    os.path.join(IMAGE_DIR, <span class="string">&quot;frame_%04d.png&quot;</span>)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="解决方案2：-指定成切片级多线程"><a href="#解决方案2：-指定成切片级多线程" class="headerlink" title="解决方案2： 指定成切片级多线程"></a>解决方案2： 指定成切片级多线程</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg_cmd = [</span><br><span class="line">    <span class="string">&#x27;ffmpeg&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;h264&#x27;</span>, </span><br><span class="line">    <span class="string">&quot;-probesize&quot;</span>, <span class="string">&quot;32&quot;</span>,    <span class="comment"># 设置探测数据大小为 32 字节</span></span><br><span class="line">    <span class="string">&quot;-thread_type&quot;</span>, <span class="string">&quot;slice&quot;</span>,         <span class="comment"># 使用切片级多线程</span></span><br><span class="line">    <span class="string">&quot;-loglevel&quot;</span>, <span class="string">&quot;debug&quot;</span>,  <span class="comment"># 启用调试日志</span></span><br><span class="line">    <span class="string">&#x27;-i&#x27;</span>, <span class="string">&quot;pipe:0&quot;</span> , </span><br><span class="line">    <span class="string">&quot;-s&quot;</span>, <span class="string">&quot;320x180&quot;</span>,  </span><br><span class="line">    <span class="string">&#x27;-f&#x27;</span>, <span class="string">&#x27;image2&#x27;</span>, </span><br><span class="line">    os.path.join(IMAGE_DIR, <span class="string">&quot;frame_%04d.png&quot;</span>)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p><img src="/2025/03/25/record/ffmpeg_debug/screen-2.png"></p>
+<p>可以看到，目前在第7帧左右开始输出实际的图像，为什么还是有7帧的延迟呢？ 还是因为关键帧问题，这个没办法避免了。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/" title="记一次ffmpeg延迟问题排查">https://galaxyguan12.github.io/2025/03/25/record/ffmpeg_debug/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/ffmpeg/" rel="tag"># ffmpeg</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2024/06/27/ml/nn/backpropagation2/" rel="prev" title="深入浅出反向传播（2）">
+                  <i class="fa fa-angle-left"></i> 深入浅出反向传播（2）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/04/15/ml/llm/quantization1/" rel="next" title="大模型的量化与双重量化">
+                  大模型的量化与双重量化 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

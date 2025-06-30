@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="出⼊参的拷⻉背景在依赖隔离的情况下，由于⼆⽅包是通过不同ClassLoader加载的，所以要调⽤⼆⽅包⾥的⽅法需要利⽤反射。然⽽在利⽤ 反射调⽤时传⼊的参数实例的ClassLoader是通过AppClassLoader加载的，⽽接收这个参数的类是⽤FatJarClassLoader加载 的，同类名不同ClassLoader加载是不同的类，返回值也是⼀样，所以需要在出⼊参时对Object进⾏转换：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用FatJar彻底解决Jar包冲突（2）">
+<meta property="og:url" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="出⼊参的拷⻉背景在依赖隔离的情况下，由于⼆⽅包是通过不同ClassLoader加载的，所以要调⽤⼆⽅包⾥的⽅法需要利⽤反射。然⽽在利⽤ 反射调⽤时传⼊的参数实例的ClassLoader是通过AppClassLoader加载的，⽽接收这个参数的类是⽤FatJarClassLoader加载 的，同类名不同ClassLoader加载是不同的类，返回值也是⼀样，所以需要在出⼊参时对Object进⾏转换：">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/bad4441ff68d472293b283c895ec4e75.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/503cf66c4cdf4d3ca680d008d8192733.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/94b9e752c15045a1a9489bee829dde41.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/c406a3be1fc8444b87dfc3b03b973069.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/082812284bd44871a7967f29e3adbeeb.png">
+<meta property="og:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/84d4adeee0cf4946a5d5b04ba46cc3f6.png">
+<meta property="article:published_time" content="2017-06-29T13:59:50.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.932Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="FatJar">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/bad4441ff68d472293b283c895ec4e75.png">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2017/06/29/java/fatjar2/","path":"2017/06/29/java/fatjar2/","title":"利用FatJar彻底解决Jar包冲突（2）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>利用FatJar彻底解决Jar包冲突（2） | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%87%BA%E2%BC%8A%E5%8F%82%E7%9A%84%E6%8B%B7%E2%BB%89"><span class="nav-number">1.</span> <span class="nav-text">出⼊参的拷⻉</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E6%9C%89%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94%E4%B8%8E%E5%AF%B9%E2%BD%90"><span class="nav-number">1.2.</span> <span class="nav-text">现有技术调研与对⽐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">代码实现</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E2%BD%87%E5%BF%97-logback"><span class="nav-number">2.</span> <span class="nav-text">⽇志-logback</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E2%BD%82%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">配置⽂件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%BD%87%E5%BF%97%E4%BE%9D%E8%B5%96"><span class="nav-number">2.2.</span> <span class="nav-text">⽇志依赖</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#autoconfig-%E6%B3%A8%E2%BC%8A-FatJar"><span class="nav-number">3.</span> <span class="nav-text">autoconfig 注⼊ FatJar</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A2%AB%E6%B3%A8%E2%BC%8A%E2%BD%82%E4%BB%B6%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">被注⼊⽂件的位置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E2%BC%8A-Jar-in-FatJar"><span class="nav-number">3.2.</span> <span class="nav-text">注⼊ Jar in FatJar</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="利用FatJar彻底解决Jar包冲突（2） | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用FatJar彻底解决Jar包冲突（2）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-06-29 21:59:50" itemprop="dateCreated datePublished" datetime="2017-06-29T21:59:50+08:00">2017-06-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="出⼊参的拷⻉"><a href="#出⼊参的拷⻉" class="headerlink" title="出⼊参的拷⻉"></a>出⼊参的拷⻉</h1><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在依赖隔离的情况下，由于⼆⽅包是通过不同ClassLoader加载的，所以要调⽤⼆⽅包⾥的⽅法需要利⽤反射。然⽽在利⽤ 反射调⽤时传⼊的参数实例的ClassLoader是通过AppClassLoader加载的，⽽接收这个参数的类是⽤FatJarClassLoader加载 的，同类名不同ClassLoader加载是不同的类，返回值也是⼀样，所以需要在出⼊参时对Object进⾏转换：</p>
+<span id="more"></span>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Map</span> <span class="variable">targetMap</span> <span class="operator">=</span> copyMap(var2); </span><br><span class="line">fromObject = <span class="built_in">this</span>.executeMethod.invoke(<span class="built_in">this</span>.bizService,var1,targetMap); </span><br><span class="line"><span class="type">BusinessServiceResultDTO</span> <span class="variable">result</span> <span class="operator">=</span> (BusinessServiceResultDTO) convert(fromObject,BusinessServiceResultDTO.class);</span><br></pre></td></tr></table></figure>
+<h2 id="现有技术调研与对⽐"><a href="#现有技术调研与对⽐" class="headerlink" title="现有技术调研与对⽐"></a>现有技术调研与对⽐</h2><p>调研的技术主要有两个：</p>
+<ol>
+<li>使⽤Spring的<strong>BeanUtils</strong>，这种⽅式只⽀持⼀层拷⻉，即当复杂类对象⾥不包含其他复杂类属 性时是可以的，但是如果包含就不会转换属性Object；</li>
+<li>使⽤Jackson 的<strong>ObjectMapper</strong>，这种⽅式通过先将Java Object 转成Json格式再从Json格式创建另⼀个classloader加载的类实例，显然这种⽅式的效率会很低，为了确保服务调⽤的响应速度，也考虑到⾃⼰实现的代价不⼤，因为两个类的字段完全⼀样只是通过不同classloader加载的。</li>
+</ol>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">convert</span><span class="params">(Object fromObject,Class toClass)</span>&#123; </span><br><span class="line">	<span class="keyword">if</span> (fromObject == <span class="literal">null</span> ||fromObject.getClass() == toClass || toClass.isAssignableFrom(fromObject.getClass)) </span><br><span class="line">		<span class="keyword">return</span> fromObject; </span><br><span class="line">	&#125;</span><br><span class="line">	<span class="type">Object</span> <span class="variable">toObject</span> <span class="operator">=</span> <span class="literal">null</span>; </span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		toObject = toClass.newInstance(); </span><br><span class="line">	&#125; <span class="keyword">catch</span> (Exception e) &#123; </span><br><span class="line">		logger.error(<span class="string">&quot;new instance error:&quot;</span>+toClass.getSimpleName(),e); </span><br><span class="line">	&#125;</span><br><span class="line">	<span class="type">Class</span> <span class="variable">fromClass</span> <span class="operator">=</span> fromObject.getClass(); </span><br><span class="line">	Field[] fields = fromClass.getDeclaredFields(); </span><br><span class="line">	<span class="keyword">for</span> (Field fromField:fields) &#123; </span><br><span class="line">		<span class="keyword">try</span>&#123;</span><br><span class="line">			fromField.setAccessible(<span class="literal">true</span>); </span><br><span class="line">			<span class="type">Object</span> <span class="variable">fromVal</span> <span class="operator">=</span> fromField.get(fromObject); </span><br><span class="line">			<span class="keyword">if</span> (fromVal == <span class="literal">null</span>)&#123; </span><br><span class="line">				<span class="keyword">continue</span>; </span><br><span class="line">			&#125;</span><br><span class="line">			<span class="type">String</span> <span class="variable">fieldName</span> <span class="operator">=</span> fromField.getName();</span><br><span class="line">			<span class="keyword">if</span>(<span class="string">&quot;serialVersionUID&quot;</span>.equals(fieldName))&#123; </span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="type">Field</span> <span class="variable">toField</span> <span class="operator">=</span> toClass.getDeclaredField(fieldName); </span><br><span class="line">			toField.setAccessible(<span class="literal">true</span>); </span><br><span class="line">			<span class="type">Class</span> <span class="variable">fromFieldClass</span> <span class="operator">=</span> fromVal.getClass(); </span><br><span class="line">			<span class="type">Class</span> <span class="variable">toFieldClass</span> <span class="operator">=</span> toField.getType(); </span><br><span class="line">			<span class="keyword">if</span>(fromFieldClass.getClassLoader() != <span class="literal">null</span>)&#123; <span class="comment">// 复杂对象</span></span><br><span class="line">				toField.set(toObject,convert(fromVal,toFieldClass));</span><br><span class="line">			&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">				<span class="type">ClassLoader</span> <span class="variable">toClassLoader</span> <span class="operator">=</span> toClass.getClassLoader(); </span><br><span class="line">				<span class="keyword">if</span> (List.class.isAssignableFrom(fromFieldClass))&#123; </span><br><span class="line">					<span class="type">List</span> <span class="variable">fromList</span> <span class="operator">=</span> (List)fromVal; </span><br><span class="line">					<span class="type">List</span> <span class="variable">toList</span> <span class="operator">=</span> (List)fromFieldClass.newInstance(); </span><br><span class="line">					<span class="keyword">for</span> (Object o : fromList) &#123; </span><br><span class="line">						<span class="keyword">if</span> (o.getClass().getClassLoader() != <span class="literal">null</span>)&#123; <span class="comment">// 这边强制使⽤同类名转换 </span></span><br><span class="line">							toList.add(convert(o,toClassLoader.loadClass(o.getClass().getName()))); </span><br><span class="line">						&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">							toList.add(o); </span><br><span class="line">						&#125; </span><br><span class="line">					&#125;</span><br><span class="line">					toField.set(toObject,toList); </span><br><span class="line">				&#125;<span class="keyword">else</span> <span class="keyword">if</span> (Map.class.isAssignableFrom(fromFieldClass))&#123; </span><br><span class="line">					<span class="type">Map</span> <span class="variable">fromMap</span> <span class="operator">=</span> (Map)fromVal; </span><br><span class="line">					<span class="type">Map</span> <span class="variable">toMap</span> <span class="operator">=</span> (Map)fromFieldClass.newInstance(); </span><br><span class="line">					<span class="keyword">for</span> (Object fromKey:fromMap.keySet()) &#123; </span><br><span class="line">						<span class="type">Object</span> <span class="variable">fromValue</span> <span class="operator">=</span> fromMap.get(fromKey); </span><br><span class="line">						<span class="type">Object</span> <span class="variable">toKey</span> <span class="operator">=</span> convert(fromKey,toClassLoader.loadClass(fromKey.getClass().getName()));</span><br><span class="line">						<span class="type">Object</span> <span class="variable">toValue</span> <span class="operator">=</span> convert(fromValue,toClassLoader.loadClass(fromValue.getClass().getName())); </span><br><span class="line">						toMap.put(toKey,toValue); </span><br><span class="line">					&#125;</span><br><span class="line">					toField.set(toObject,toMap); </span><br><span class="line">				&#125;<span class="keyword">else</span> <span class="keyword">if</span> (Set.class.isAssignableFrom(fromFieldClass))&#123; </span><br><span class="line">					<span class="type">Set</span> <span class="variable">fromSet</span> <span class="operator">=</span> (Set)fromVal; </span><br><span class="line">					<span class="type">Set</span> <span class="variable">toSet</span> <span class="operator">=</span> (Set)fromFieldClass.newInstance(); </span><br><span class="line">					<span class="keyword">for</span> (Object o : fromSet) &#123; </span><br><span class="line">						<span class="keyword">if</span> (o.getClass().getClassLoader() != <span class="literal">null</span>)&#123; <span class="comment">// 这边强制使⽤同类名转换 </span></span><br><span class="line">							toSet.add(convert(o,toClass.getClassLoader().loadClass(o.getClass().getName()))); </span><br><span class="line">						&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">							toSet.add(o); </span><br><span class="line">						&#125; </span><br><span class="line">					&#125;</span><br><span class="line">					toField.set(toObject,toSet); </span><br><span class="line">				&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">					toField.set(toObject,fromVal); </span><br><span class="line">				&#125; </span><br><span class="line">			&#125; </span><br><span class="line">		&#125;<span class="keyword">catch</span> (Exception e)&#123; </span><br><span class="line">			logger.error(<span class="string">&quot;convert error:&quot;</span>,e); </span><br><span class="line">		&#125; </span><br><span class="line">	&#125;<span class="keyword">return</span> toObject; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="⽇志-logback"><a href="#⽇志-logback" class="headerlink" title="⽇志-logback"></a>⽇志-logback</h1><p>由于完全隔离，⼆⽅包需要有⾃⼰的⽇志系统。这⼀节介绍⼆⽅包如何使⽤⾃⼰的⽇志系统。</p>
+<h2 id="配置⽂件"><a href="#配置⽂件" class="headerlink" title="配置⽂件"></a>配置⽂件</h2><p>logback 查找配置⽂件的流程为：</p>
+<ol>
+<li>在classpath下查找配置⽂件 logback-test.xml</li>
+<li>如果⽂件不存在则查找 logback.xml 所以配置⽂件的位置为：<br><img src="/2017/06/29/java/fatjar2/bad4441ff68d472293b283c895ec4e75.png" alt="在这里插入图片描述"><br>配置⽂件内容：<br><img src="/2017/06/29/java/fatjar2/503cf66c4cdf4d3ca680d008d8192733.png" alt="在这里插入图片描述"></li>
+</ol>
+<h2 id="⽇志依赖"><a href="#⽇志依赖" class="headerlink" title="⽇志依赖"></a>⽇志依赖</h2><p>根据⽇志依赖冲突：<br><img src="/2017/06/29/java/fatjar2/94b9e752c15045a1a9489bee829dde41.png" alt="在这里插入图片描述"><br>为了让⼆⽅包⽀持logback⽇志，且⾃身内部不冲突，根据⽇志框架的结构图配置pom⽇志依赖如下，这些统⼀依赖都会写 到parent⾥让⼆⽅包的pom更简洁。<br><img src="/2017/06/29/java/fatjar2/c406a3be1fc8444b87dfc3b03b973069.png" alt="在这里插入图片描述"></p>
+<h1 id="autoconfig-注⼊-FatJar"><a href="#autoconfig-注⼊-FatJar" class="headerlink" title="autoconfig 注⼊ FatJar"></a>autoconfig 注⼊ FatJar</h1><h2 id="被注⼊⽂件的位置"><a href="#被注⼊⽂件的位置" class="headerlink" title="被注⼊⽂件的位置"></a>被注⼊⽂件的位置</h2><p>由于autoconfig是在打完包之后执⾏的，因此在autoconfig配置⽂件中需要指定的注⼊⽂件的位置应该根据打包之后的⽬录 结构来配置：<br><img src="/2017/06/29/java/fatjar2/082812284bd44871a7967f29e3adbeeb.png" alt="在这里插入图片描述"></p>
+<h2 id="注⼊-Jar-in-FatJar"><a href="#注⼊-Jar-in-FatJar" class="headerlink" title="注⼊ Jar in FatJar"></a>注⼊ Jar in FatJar</h2><p>如果还使⽤之前的autoconfig插件，autoconfig在注⼊jarin FatJar之后会对jar 进⾏压缩导致FatJarClassLoader在加载该jar包 的时候加载失败。通过咨询autoconfig的同学，发现autoconfig其实提供了注⼊FatJar的插件（pandora boot采⽤的这种⽅ 式），由此也可⻅之前选择这种格式FatJar的正确性。<br><img src="/2017/06/29/java/fatjar2/84d4adeee0cf4946a5d5b04ba46cc3f6.png" alt="在这里插入图片描述"></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2017/06/29/java/fatjar2/" title="利用FatJar彻底解决Jar包冲突（2）">https://galaxyguan12.github.io/2017/06/29/java/fatjar2/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/FatJar/" rel="tag"># FatJar</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2017/06/29/java/fatjar1/" rel="prev" title="利用FatJar彻底解决Jar包冲突（1）">
+                  <i class="fa fa-angle-left"></i> 利用FatJar彻底解决Jar包冲突（1）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2017/06/29/java/fatjar3/" rel="next" title="利用FatJar彻底解决Jar包冲突（3）">
+                  利用FatJar彻底解决Jar包冲突（3） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

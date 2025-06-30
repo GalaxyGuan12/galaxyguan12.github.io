@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大模型量化的含义和作用什么是量化量化是指将神经网络中的参数（权重和激活值）从高精度的数值表示（如32位浮点数）转换为低精度表示（如8位整数）的技术。这是一种模型压缩方法，可以显著减少模型的存储空间和计算需求。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型的量化与双重量化">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/index.html">
+<meta property="og:site_name" content="递归书房">
+<meta property="og:description" content="大模型量化的含义和作用什么是量化量化是指将神经网络中的参数（权重和激活值）从高精度的数值表示（如32位浮点数）转换为低精度表示（如8位整数）的技术。这是一种模型压缩方法，可以显著减少模型的存储空间和计算需求。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-04-15T13:53:33.000Z">
+<meta property="article:modified_time" content="2025-06-29T23:59:12.994Z">
+<meta property="article:author" content="GalaxyGuan">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/","path":"2025/04/15/ml/llm/quantization1/","title":"大模型的量化与双重量化"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>大模型的量化与双重量化 | 递归书房</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">递归书房</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">GalaxyGuan's Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%87%8F%E5%8C%96%E7%9A%84%E5%90%AB%E4%B9%89%E5%92%8C%E4%BD%9C%E7%94%A8"><span class="nav-number">1.</span> <span class="nav-text">大模型量化的含义和作用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%87%8F%E5%8C%96"><span class="nav-number">1.1.</span> <span class="nav-text">什么是量化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8F%E5%8C%96%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">量化的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.3.</span> <span class="nav-text">具体示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E9%87%8D%E9%87%8F%E5%8C%96%E7%9A%84%E5%90%AB%E4%B9%89%E5%92%8C%E4%BD%9C%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">双重量化的含义和作用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%8F%8C%E9%87%8D%E9%87%8F%E5%8C%96"><span class="nav-number">2.1.</span> <span class="nav-text">什么是双重量化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E9%87%8D%E9%87%8F%E5%8C%96%E7%9A%84%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">双重量化的具体实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E9%87%8D%E9%87%8F%E5%8C%96%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text">双重量化的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E7%A4%BA%E4%BE%8B%E5%AF%B9%E6%AF%94"><span class="nav-number">2.4.</span> <span class="nav-text">具体示例对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">2.5.</span> <span class="nav-text">实际应用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.</span> <span class="nav-text">代码示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BitsAndBytesConfig-%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3"><span class="nav-number">4.</span> <span class="nav-text">BitsAndBytesConfig 配置详解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#load-in-4bit-True"><span class="nav-number">4.1.</span> <span class="nav-text">load_in_4bit&#x3D;True</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bnb-4bit-use-double-quant-True"><span class="nav-number">4.2.</span> <span class="nav-text">bnb_4bit_use_double_quant&#x3D;True</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bnb-4bit-quant-type-nf4"><span class="nav-number">4.3.</span> <span class="nav-text">bnb_4bit_quant_type&#x3D;&quot;nf4&quot;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bnb-4bit-compute-dtype-torch-bfloat16"><span class="nav-number">4.4.</span> <span class="nav-text">bnb_4bit_compute_dtype&#x3D;torch.bfloat16</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E4%BD%BF%E7%94%A8%E5%AF%B9%E6%AF%94"><span class="nav-number">5.</span> <span class="nav-text">内存使用对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9%E8%BF%99%E4%BA%9B%E5%8F%82%E6%95%B0"><span class="nav-number">6.</span> <span class="nav-text">为什么选择这些参数</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="GalaxyGuan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">GalaxyGuan</p>
+  <div class="site-description" itemprop="description">用递归追溯问题本质</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/gdr12?type=blog" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;gdr12?type&#x3D;blog" rel="noopener me" target="_blank"><i class="fa-solid fa-blog fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/GalaxyGuan12" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;GalaxyGuan12" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/dengrongguan12@gmail.com" title="E-Mail → dengrongguan12@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/images/wechat.jpg" title="WeChat → &#x2F;images&#x2F;wechat.jpg" rel="noopener me"><i class="fab fa-weixin fa-fw"></i>WeChat</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/DarrenGuan" title="Zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;DarrenGuan" rel="noopener me" target="_blank"><i class="fab fa-zhihu fa-fw"></i>Zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://x.com/rerelaxguan" title="Twitter → https:&#x2F;&#x2F;x.com&#x2F;rerelaxguan" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="大模型的量化与双重量化 | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          大模型的量化与双重量化
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-04-15 21:53:33" itemprop="dateCreated datePublished" datetime="2025-04-15T21:53:33+08:00">2025-04-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">机器学习</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/" itemprop="url" rel="index"><span itemprop="name">大语言模型</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="大模型量化的含义和作用"><a href="#大模型量化的含义和作用" class="headerlink" title="大模型量化的含义和作用"></a>大模型量化的含义和作用</h2><h3 id="什么是量化"><a href="#什么是量化" class="headerlink" title="什么是量化"></a>什么是量化</h3><p><strong>量化</strong>是指将神经网络中的参数（权重和激活值）从高精度的数值表示（如32位浮点数）转换为低精度表示（如8位整数）的技术。这是一种模型压缩方法，可以显著减少模型的存储空间和计算需求。</p>
+<span id="more"></span>
+<h3 id="量化的作用"><a href="#量化的作用" class="headerlink" title="量化的作用"></a>量化的作用</h3><p><strong>内存节省</strong>：将32位浮点数转换为8位整数，可以将模型大小减少约75%。例如，一个原本需要28GB内存的7B参数模型，量化后可能只需要7GB。</p>
+<p><strong>计算加速</strong>：整数运算比浮点运算更快，特别是在专用硬件上。量化模型的推理速度可以提升2-4倍。</p>
+<p><strong>能耗降低</strong>：低精度计算消耗更少的电力，这对移动设备和边缘计算场景尤为重要。</p>
+<p><strong>部署便利</strong>：量化后的模型可以在资源受限的设备上运行，扩大了应用范围。</p>
+<h3 id="具体示例"><a href="#具体示例" class="headerlink" title="具体示例"></a>具体示例</h3><p>假设有一个权重值为0.12345678的参数：</p>
+<ul>
+<li><strong>FP32表示</strong>：需要32位存储，精确表示为0.12345678</li>
+<li><strong>INT8量化</strong>：使用8位整数表示，可能变为31（通过缩放因子0.004转换）</li>
+<li><strong>精度损失</strong>：量化后的实际值可能是0.124，有轻微的精度损失</li>
+</ul>
+<h2 id="双重量化的含义和作用"><a href="#双重量化的含义和作用" class="headerlink" title="双重量化的含义和作用"></a>双重量化的含义和作用</h2><h3 id="什么是双重量化"><a href="#什么是双重量化" class="headerlink" title="什么是双重量化"></a>什么是双重量化</h3><p><strong>双重量化</strong>（Double Quantization）是QLoRA（Quantized Low-Rank Adaptation）技术中的一个关键创新，它对量化过程本身进行进一步的量化。</p>
+<p>在传统量化中，我们需要存储：</p>
+<ol>
+<li>量化后的权重</li>
+<li>量化参数（如缩放因子和零点）</li>
+</ol>
+<p>双重量化的思路是：既然量化参数也占用存储空间，为什么不对这些参数也进行量化？</p>
+<h3 id="双重量化的具体实现"><a href="#双重量化的具体实现" class="headerlink" title="双重量化的具体实现"></a>双重量化的具体实现</h3><p><strong>第一层量化</strong>：将FP32权重量化为INT4</p>
+<ul>
+<li>原始权重：32位浮点数</li>
+<li>量化后：4位整数</li>
+<li>需要存储：量化权重 + 缩放因子（FP32）</li>
+</ul>
+<p><strong>第二层量化</strong>：对缩放因子进行量化</p>
+<ul>
+<li>缩放因子：从FP32量化为FP8</li>
+<li>进一步减少存储需求</li>
+</ul>
+<h3 id="双重量化的作用"><a href="#双重量化的作用" class="headerlink" title="双重量化的作用"></a>双重量化的作用</h3><p><strong>更高的压缩率</strong>：在QLoRA中，双重量化可以将内存使用量进一步减少约0.4GB&#x2F;1B参数，相比单层量化节省约10-15%的额外空间。</p>
+<p><strong>保持精度</strong>：尽管进行了两层量化，通过精心设计的量化策略，模型性能下降很小。</p>
+<h3 id="具体示例对比"><a href="#具体示例对比" class="headerlink" title="具体示例对比"></a>具体示例对比</h3><p>以一个1B参数的模型为例：</p>
+<p><strong>无量化</strong>：</p>
+<ul>
+<li>存储需求：4GB（1B × 32位）</li>
+<li>计算：FP32运算</li>
+</ul>
+<p><strong>传统4位量化</strong>：</p>
+<ul>
+<li>权重存储：0.5GB（1B × 4位）</li>
+<li>量化参数：约0.1GB（缩放因子等）</li>
+<li>总计：0.6GB</li>
+</ul>
+<p><strong>双重量化</strong>：</p>
+<ul>
+<li>权重存储：0.5GB（1B × 4位）</li>
+<li>量化参数：约0.06GB（缩放因子也被量化）</li>
+<li>总计：0.56GB</li>
+<li>额外节省：约7%的存储空间</li>
+</ul>
+<h3 id="实际应用场景"><a href="#实际应用场景" class="headerlink" title="实际应用场景"></a>实际应用场景</h3><p><strong>微调大模型</strong>：在使用QLoRA进行大模型微调时，双重量化可以让更大的模型在有限的GPU内存中进行训练。</p>
+<p><strong>边缘部署</strong>：在手机或嵌入式设备上部署大模型时，每一点内存节省都很关键。</p>
+<p><strong>成本优化</strong>：在云端服务中，内存使用的减少直接转化为成本节省。</p>
+<p>通过量化和双重量化技术，我们可以在保持模型性能的同时，显著降低部署和运行成本，使大模型技术更加普及和实用。</p>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForCausalLM</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义量化配置</span></span><br><span class="line">bnb_config = BitsAndBytesConfig(</span><br><span class="line">    load_in_4bit=<span class="literal">True</span>,                    <span class="comment"># 4位量化</span></span><br><span class="line">    bnb_4bit_use_double_quant=<span class="literal">True</span>,       <span class="comment"># 双重量化</span></span><br><span class="line">    bnb_4bit_quant_type=<span class="string">&quot;nf4&quot;</span>,           <span class="comment"># NF4量化类型</span></span><br><span class="line">    bnb_4bit_compute_dtype=torch.bfloat16, <span class="comment"># 计算数据类型</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载量化模型</span></span><br><span class="line">model = AutoModelForCausalLM.from_pretrained(</span><br><span class="line">    <span class="string">&quot;meta-llama/Llama-2-7b-hf&quot;</span>,</span><br><span class="line">    quantization_config=bnb_config,</span><br><span class="line">    device_map=<span class="string">&quot;auto&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>这段代码创建了一个BitsAndBytesConfig配置对象，用于设置模型的量化参数。下面是每个参数的含义和作用：</p>
+<h2 id="BitsAndBytesConfig-配置详解"><a href="#BitsAndBytesConfig-配置详解" class="headerlink" title="BitsAndBytesConfig 配置详解"></a>BitsAndBytesConfig 配置详解</h2><h3 id="load-in-4bit-True"><a href="#load-in-4bit-True" class="headerlink" title="load_in_4bit=True"></a><code>load_in_4bit=True</code></h3><p><strong>作用</strong>：启用4位量化加载模型</p>
+<ul>
+<li>将模型权重从FP32&#x2F;FP16压缩到4位整数</li>
+<li>内存使用量减少约87.5%（32位→4位）</li>
+<li>例如：7B模型从28GB压缩到约3.5GB</li>
+</ul>
+<h3 id="bnb-4bit-use-double-quant-True"><a href="#bnb-4bit-use-double-quant-True" class="headerlink" title="bnb_4bit_use_double_quant=True"></a><code>bnb_4bit_use_double_quant=True</code></h3><p><strong>作用</strong>：启用双重量化（前面详细解释过的技术）</p>
+<ul>
+<li>对量化过程中的缩放因子也进行量化</li>
+<li>进一步节省10-15%的内存</li>
+<li>这是QLoRA的核心创新之一</li>
+</ul>
+<h3 id="bnb-4bit-quant-type-nf4"><a href="#bnb-4bit-quant-type-nf4" class="headerlink" title="bnb_4bit_quant_type=&quot;nf4&quot;"></a><code>bnb_4bit_quant_type=&quot;nf4&quot;</code></h3><p><strong>作用</strong>：指定量化类型为NF4（NormalFloat4）</p>
+<ul>
+<li><strong>NF4</strong>：专为神经网络权重分布优化的4位数据类型</li>
+<li>相比传统的均匀量化（fp4），NF4能更好地处理权重的正态分布特性</li>
+<li>在相同压缩率下提供更好的模型性能</li>
+</ul>
+<h3 id="bnb-4bit-compute-dtype-torch-bfloat16"><a href="#bnb-4bit-compute-dtype-torch-bfloat16" class="headerlink" title="bnb_4bit_compute_dtype=torch.bfloat16"></a><code>bnb_4bit_compute_dtype=torch.bfloat16</code></h3><p><strong>作用</strong>：设置计算时的数据类型</p>
+<ul>
+<li>虽然权重以4位存储，但计算时会临时转换为bfloat16</li>
+<li><strong>bfloat16</strong>相比float16有更大的数值范围，减少溢出风险</li>
+<li>在推理过程中提供数值稳定性</li>
+</ul>
+<h2 id="内存使用对比"><a href="#内存使用对比" class="headerlink" title="内存使用对比"></a>内存使用对比</h2><p>以Llama-2-7B模型为例：</p>
+<p><strong>原始模型</strong>：</p>
+<ul>
+<li>存储：~28GB（7B参数 × 4字节）</li>
+<li>计算：FP32</li>
+</ul>
+<p><strong>使用此配置后</strong>：</p>
+<ul>
+<li>存储：~3.2GB（4位权重 + 双重量化的缓存参数）</li>
+<li>计算：临时转换为bfloat16进行运算</li>
+<li>内存节省：约88%</li>
+</ul>
+<h2 id="为什么选择这些参数"><a href="#为什么选择这些参数" class="headerlink" title="为什么选择这些参数"></a>为什么选择这些参数</h2><p><strong>NF4 vs FP4</strong>：</p>
+<ul>
+<li>NF4专门针对神经网络权重的分布特性设计</li>
+<li>在[-1, 1]范围内提供更密集的量化点</li>
+<li>对于接近0的小权重值有更高精度</li>
+</ul>
+<p><strong>bfloat16计算类型</strong>：</p>
+<ul>
+<li>比float16有更大的数值范围（指数部分更宽）</li>
+<li>减少数值溢出和下溢问题</li>
+<li>在现代硬件上有良好支持</li>
+</ul>
+<p>这个配置是目前QLoRA微调和推理的标准设置，在保持模型性能的同时最大化内存效率。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/" title="大模型的量化与双重量化">https://galaxyguan12.github.io/2025/04/15/ml/llm/quantization1/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/03/25/record/ffmpeg_debug/" rel="prev" title="记一次ffmpeg延迟问题排查">
+                  <i class="fa fa-angle-left"></i> 记一次ffmpeg延迟问题排查
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/05/13/cpp/cmake_linux/" rel="next" title="C++ linux打包运行方案（cmake）">
+                  C++ linux打包运行方案（cmake） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">GalaxyGuan</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
