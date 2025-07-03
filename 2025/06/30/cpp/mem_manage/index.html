@@ -20,25 +20,27 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"galaxyguan12.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
 
-    <meta name="description" content="用递归追溯问题本质">
-<meta property="og:type" content="website">
-<meta property="og:title" content="递归书房">
-<meta property="og:url" content="https://galaxyguan12.github.io/tags/Mac/index.html">
+    <meta name="description" content="new&#x2F;delete与malloc&#x2F;free的区别">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++中的内存管理">
+<meta property="og:url" content="https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/index.html">
 <meta property="og:site_name" content="递归书房">
-<meta property="og:description" content="用递归追溯问题本质">
+<meta property="og:description" content="new&#x2F;delete与malloc&#x2F;free的区别">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-06-30T12:16:46.000Z">
+<meta property="article:modified_time" content="2025-07-03T10:56:34.230Z">
 <meta property="article:author" content="GalaxyGuan">
-<meta property="article:tag" content="blog">
+<meta property="article:tag" content="C++">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://galaxyguan12.github.io/tags/Mac/">
+<link rel="canonical" href="https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":false,"lang":"en","comments":"","permalink":"","path":"tags/Mac/index.html","title":""}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/","path":"2025/06/30/cpp/mem_manage/","title":"C++中的内存管理"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Tag: Mac | 递归书房</title>
+<title>C++中的内存管理 | 递归书房</title>
   
 
 
@@ -122,7 +124,7 @@
   
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -135,6 +137,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#new-delete%E4%B8%8Emalloc-free%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.</span> <span class="nav-text">new&#x2F;delete与malloc&#x2F;free的区别</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -199,50 +202,193 @@
 
     </div>
 
-    <div class="main-inner tag posts-collapse">
+    <div class="main-inner post posts-expand">
 
 
   
+
+
+<div class="post-block">
   
   
-  <div class="post-block">
-    <div class="post-content">
-      <div class="collection-title">
-        <h1 class="collection-header">Mac
-          <small>Tag</small>
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="GalaxyGuan">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="递归书房">
+      <meta itemprop="description" content="用递归追溯问题本质">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++中的内存管理 | 递归书房">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++中的内存管理
         </h1>
-      </div>
 
-      
-    <div class="collection-year">
-      <span class="collection-header">2025</span>
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2025-06-30 20:16:46" itemprop="dateCreated datePublished" datetime="2025-06-30T20:16:46+08:00">2025-06-30</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="new-delete与malloc-free的区别"><a href="#new-delete与malloc-free的区别" class="headerlink" title="new&#x2F;delete与malloc&#x2F;free的区别"></a>new&#x2F;delete与malloc&#x2F;free的区别</h1><span id="more"></span>
+
+<p>主要区别包括：</p>
+<p><strong>new&#x2F;delete的特点：</strong></p>
+<ul>
+<li>调用构造函数和析构函数</li>
+<li>类型安全，返回正确类型的指针</li>
+<li>可以被重载</li>
+<li>失败时抛出异常</li>
+<li>自动计算所需内存大小</li>
+</ul>
+<p><strong>malloc&#x2F;free的特点：</strong></p>
+<ul>
+<li>只分配&#x2F;释放内存，不调用构造&#x2F;析构函数</li>
+<li>返回void*指针，需要强制转换</li>
+<li>不能被重载</li>
+<li>失败时返回NULL</li>
+<li>需要手动指定内存大小## 2. 内存泄漏的检测和避免</li>
+</ul>
+<p>内存泄漏是指程序分配了内存但没有正确释放，导致内存无法被重复使用。</p>
+<p><strong>检测方法：</strong></p>
+<ul>
+<li>使用Valgrind（Linux）</li>
+<li>使用Visual Studio诊断工具（Windows）</li>
+<li>使用AddressSanitizer</li>
+<li>使用智能指针避免手动内存管理</li>
+</ul>
+<p><strong>避免策略：</strong></p>
+<ul>
+<li>使用RAII（资源获取即初始化）原则</li>
+<li>使用智能指针</li>
+<li>遵循”谁分配谁释放”原则</li>
+<li>使用容器类代替原始数组## 3. 栈和堆的区别</li>
+</ul>
+<p><strong>栈（Stack）的特点：</strong></p>
+<ul>
+<li>由编译器自动管理</li>
+<li>访问速度快</li>
+<li>内存连续分配</li>
+<li>容量有限（通常几MB）</li>
+<li>变量作用域结束时自动释放</li>
+<li>支持LIFO（后进先出）</li>
+</ul>
+<p><strong>堆（Heap）的特点：</strong></p>
+<ul>
+<li>由程序员手动管理（或智能指针）</li>
+<li>访问速度较慢</li>
+<li>内存可能不连续</li>
+<li>容量大（受系统内存限制）</li>
+<li>需要手动释放</li>
+<li>支持动态分配## 总结</li>
+</ul>
+<p><strong>选择栈还是堆的原则：</strong></p>
+<ol>
+<li><p><strong>优先使用栈</strong>：</p>
+<ul>
+<li>小型变量和对象</li>
+<li>生命周期明确的临时数据</li>
+<li>性能要求高的场景</li>
+</ul>
+</li>
+<li><p><strong>使用堆的情况</strong>：</p>
+<ul>
+<li>大型数据结构</li>
+<li>动态大小的数据</li>
+<li>需要在函数间传递的对象</li>
+<li>生命周期复杂的对象</li>
+</ul>
+</li>
+<li><p><strong>最佳实践</strong>：</p>
+<ul>
+<li>使用RAII原则管理资源</li>
+<li>优先使用智能指针而非原始指针</li>
+<li>使用容器类（vector、string等）代替原始数组</li>
+<li>遵循”谁分配谁释放”的原则</li>
+<li>使用工具检测内存泄漏</li>
+</ul>
+</li>
+</ol>
+<p>这些代码示例展示了内存管理的核心概念和最佳实践，帮助你编写更安全、高效的C++程序。</p>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2025-05-19T19:39:34+08:00"
-              content="2025-05-19">
-          05-19
-        </time>
-      </div>
+    
+    
+    
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2025/05/19/cpp/cmake_mac/" itemprop="url">
-            <span itemprop="name">C++ Mac 打包运行方案（cmake）</span>
-          </a>
-      </div>
+    <footer class="post-footer">
+          
 
-      
-    </header>
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>GalaxyGuan
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/" title="C++中的内存管理">https://galaxyguan12.github.io/2025/06/30/cpp/mem_manage/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/06/28/cpp/ptr_ref/" rel="prev" title="C++中的指针和引用">
+                  <i class="fa fa-angle-left"></i> C++中的指针和引用
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
   </article>
+</div>
 
-    </div>
-  </div>
-  
-  
-  
+
+
+
+
 
 </div>
   </main>
